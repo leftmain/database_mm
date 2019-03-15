@@ -8,9 +8,9 @@
 
 #define LEN 1024
 
-classRecord 
+class Record 
 {
-private:
+protected:
 	std::unique_ptr<char []> name;
 	int phone = 0;
 	int group = 0;
@@ -34,7 +34,7 @@ public:
 	~Record() {}
 
 	Record& operator=(const Record& rhs) {
-		init(rhs.name.get(), rhs.p, rhs.g);
+		init(rhs.name.get(), rhs.phone, rhs.group);
 		return *this;
 	}
 	Record& operator=(Record&& rhs) {
@@ -59,13 +59,13 @@ public:
 		if (name.get() && !rhs.name.get()) return 1;
 		return phone - rhs.phone;
 */
-		return strcmp(name, rhs.name);
+		return strcmp(name.get(), rhs.name.get());
 	}
 	err_code read(FILE * fp) {
 		char buf[LEN];
 		int p = 0, g = 0;
 		if (fscanf(fp, "%s%d%d", buf, &p, &g) != 3) return CANNOT_READ;
-		return init(buf, v);
+		return init(buf, p, g);
 	}
 	void print(FILE * fp = stdout) const {
 		fprintf(fp, "(%s %d %d)", name.get(), phone, group);
