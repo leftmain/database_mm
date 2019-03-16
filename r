@@ -1,5 +1,5 @@
 #!/bin/bash
-./a < ~/Downloads/commands.txt > res.txt
-diff ~/Downloads/commands.txt res.txt
+./a < ~/Downloads/prog_files/$1 > res.txt
+diff ~/Downloads/prog_files/$1 res.txt
 #make
 #./a

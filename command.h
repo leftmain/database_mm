@@ -110,7 +110,8 @@ public:
 		switch (field) {
 			case F_NAME:
 				cond_order |= (ORDER_N_1 << order);
-				name = std::make_unique<char []>(strlen(buf) + 1);
+//				name = std::make_unique<char []>(strlen(buf) + 1);
+				name = std::unique_ptr<char []>(new char[strlen(buf) + 1]);
 				if (!name) {
 					perror("memory error");
 					return 1;
@@ -214,6 +215,7 @@ public:
 			case LE: printf(" <="); return;
 			case GE: printf(" >="); return;
 			case LIKE: printf(" like"); return;
+			default: return;
 		}
 	}
 	void print_one_cond(int field) {

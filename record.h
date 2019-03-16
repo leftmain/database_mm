@@ -19,8 +19,8 @@ protected:
 		phone = p;
 		group = g;
 		if (n) {
-//			name = std::unique_ptr<char []>(new char[strlen(n) + 1]);
-			name = std::make_unique<char []>(strlen(n) + 1);
+			name = std::unique_ptr<char []>(new char[strlen(n) + 1]);
+//			name = std::make_unique<char []>(strlen(n) + 1);
 			if (!name) return MEM_ERR;
 			strcpy(name.get(), n);
 		} else name = 0;
