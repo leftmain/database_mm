@@ -11,6 +11,7 @@ int main(int argc, char ** argv) {
 		c.clear();
 	}
 	c.print();
+//	printf("\n");
 	t = (clock() - t) / CLOCKS_PER_SEC;
 
 	fprintf(stderr, "Time: %.2lf\n", t);
