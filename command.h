@@ -205,7 +205,6 @@ int Command::parse_cond(const char * c, char * buf) {
 
 int Command::parse(const char * str) {
 	const char * c = str;
-	int i = 0;
 	if (get_field(&c, buf)) return 0;
 	if (!strcmp(buf, "quit")) {
 		type = QUIT;
@@ -252,7 +251,8 @@ void Command::print_c_cond(cond_type t) {
 	case LE: strcat(buf, " <= "); return;
 	case GE: strcat(buf, " >= "); return;
 	case LIKE: strcat(buf, " like "); return;
-	default: perror("unknown cond");
+	case COND_NONE: return;
+//	default: perror("unknown cond");
 	}
 }
 void Command::print_one_cond(int field) {
@@ -329,14 +329,14 @@ void Command::print() {
 		print_cond();
 		printf("%s;\n", buf);
 		return;
-	default:
-		perror("unknown type");
+	case CMD_NONE:
 		return;
 	}
 }
 
 int Command::check(const Record& element) {
-	return 0;
+	if (&element) return 0;
+	else return 0;
 }
 
 void Command::clear() {

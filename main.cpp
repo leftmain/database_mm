@@ -1,6 +1,6 @@
 #include "command.h"
 
-int main(int argc, char ** argv) {
+int main() {
 	Command c;
 	char buf[LEN];
 	double t = 0;
@@ -11,7 +11,7 @@ int main(int argc, char ** argv) {
 		c.clear();
 	}
 	c.print();
-//	printf("\n");
+	printf("\n");
 	t = (clock() - t) / CLOCKS_PER_SEC;
 
 	fprintf(stderr, "Time: %.2lf\n", t);
