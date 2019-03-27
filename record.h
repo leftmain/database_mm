@@ -15,17 +15,7 @@ protected:
 	int phone = 0;
 	int group = 0;
 
-	err_code init(const char * n = 0, int p = 0, int g = 0) {
-		phone = p;
-		group = g;
-		if (n) {
-			name = std::unique_ptr<char []>(new char[strlen(n) + 1]);
-//			name = std::make_unique<char []>(strlen(n) + 1);
-			if (!name) return MEM_ERR;
-			strcpy(name.get(), n);
-		} else name = 0;
-		return ALL_RIGHT;
-	}
+	err_code init(const char * = nullptr, int = 0, int = 0);
 
 public:
 	Record(const Record& a) { init(a.name.get(), a.phone, a.group); }
@@ -33,60 +23,82 @@ public:
 	Record(const char * n = nullptr, int p = 0, int g = 0) { init(n, p, g); }
 	~Record() {}
 
-	Record& operator=(const Record& rhs) {
-		init(rhs.name.get(), rhs.phone, rhs.group);
-		return *this;
-	}
-	Record& operator=(Record&& rhs) {
-		name = std::move(name);
-		phone = rhs.phone;
-		group = rhs.group;
-		return *this;
-	}
-	void operator==(Record& rhs) {
-		name = std::move(rhs.name);
-		phone = rhs.phone;
-		group = rhs.group;
-	}
-	int operator<(const Record& rhs) const {
-/*
-		if (name.get() && rhs.name.get()) {
-			int res = strcmp(name.get(), rhs.name.get());
-			if (res) return res;
-			return phone - rhs.phone;
-		}
-		if (!name.get() && rhs.name.get()) return -1;
-		if (name.get() && !rhs.name.get()) return 1;
-		return phone - rhs.phone;
-*/
-		return strcmp(name.get(), rhs.name.get());
-	}
-	err_code read(FILE * fp) {
-		char buf[LEN];
-		int p = 0, g = 0;
-		if (fscanf(fp, "%s%d%d", buf, &p, &g) != 3) return CANNOT_READ;
-		return init(buf, p, g);
-	}
-	void print(FILE * fp = stdout) const {
-		fprintf(fp, "(%s %d %d)", name.get(), phone, group);
-	}
-	void printn(FILE * fp = stdout) const {
-		fprintf(fp, "%s %d %d\n", name.get(), phone, group);
-	}
-	void swap(Record& a) {
-		name.swap(a.name);
-		int p = a.phone;
-		phone = a.phone;
-		a.phone = p;
-		int g = a.group;
-		group = a.group;
-		a.group = g;
-	}
+	Record& operator=(const Record&);
+	Record& operator=(Record&&);
+	void operator==(Record(&));
+	int operator<(const Record&) const;
+	err_code read(FILE *);
+	void print(FILE * = stdout) const;
+	void swap(Record&);
+
 	char * get_name() const { return name.get(); }
 	int get_phone() const { return phone; }
 	int get_group() const { return group; }
 
 };
+
+err_code Record::init(const char * n, int p, int g) {
+	phone = p;
+	group = g;
+	if (n) {
+		name = std::unique_ptr<char []>(new char[strlen(n) + 1]);
+		if (!name) return MEM_ERR;
+		strcpy(name.get(), n);
+	} else name = 0;
+	return ALL_RIGHT;
+}
+
+Record& Record::operator=(const Record& rhs) {
+	init(rhs.name.get(), rhs.phone, rhs.group);
+	return *this;
+}
+
+Record& Record::operator=(Record&& rhs) {
+	name = std::move(name);
+	phone = rhs.phone;
+	group = rhs.group;
+	return *this;
+}
+
+void Record::operator==(Record& rhs) {
+	name = std::move(rhs.name);
+	phone = rhs.phone;
+	group = rhs.group;
+}
+
+int Record::operator<(const Record& rhs) const {
+	if (name.get() && rhs.name.get()) {
+		int res = strcmp(name.get(), rhs.name.get());
+		if (res) return res;
+		if (phone == rhs.phone) return group - rhs.group;
+		return phone - rhs.phone;
+	}
+	if (!name.get() && rhs.name.get()) return -1;
+	if (name.get() && !rhs.name.get()) return 1;
+	if (phone == rhs.phone) return group - rhs.group;
+	return phone - rhs.phone;
+}
+
+err_code Record::read(FILE * fp) {
+	char buf[LEN];
+	int p = 0, g = 0;
+	if (fscanf(fp, "%s%d%d", buf, &p, &g) != 3) return CANNOT_READ;
+	return init(buf, p, g);
+}
+
+void Record::print(FILE * fp) const {
+	fprintf(fp, "%s\t%d\t%d\n", name.get(), phone, group);
+}
+
+void Record::swap(Record& a) {
+	name.swap(a.name);
+	int p = a.phone;
+	phone = a.phone;
+	a.phone = p;
+	int g = a.group;
+	group = a.group;
+	a.group = g;
+}
 
 #endif
 

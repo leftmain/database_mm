@@ -21,6 +21,7 @@
 #define SPACE 		"( ),."
 #define SPACE_END 	"( ),.;"
 
+static int string_like(const char *, const char *);
 
 enum cmd_type
 {
@@ -302,9 +303,6 @@ void Command::print_cond() {
 	else if (cond_order & ORDER_P_3) print_one_cond(F_PHONE);
 	else if (cond_order & ORDER_G_3) print_one_cond(F_GROUP);
 	else { perror("print_cond_3 error"); return; }
-
-
-	return;
 }
 
 void Command::print() {
@@ -334,9 +332,135 @@ void Command::print() {
 	}
 }
 
-int Command::check(const Record& element) {
-	if (&element) return 0;
-	else return 0;
+int Command::check(const Record& el) {
+	int n = 1, p = 1, g = 1;
+	int c1 = 0, c2 = 0, c3 = 0;
+	switch(c_name) {
+	case EQ:
+		if (strcmp(el.get_name(), name.get())) n = 0;
+		break;
+	case NE:
+		if (!strcmp(el.get_name(), name.get())) n = 0;
+		break;
+	case LT:
+		if (strcmp(el.get_name(), name.get()) >= 0) n = 0;
+		break;
+	case GT:
+		if (strcmp(el.get_name(), name.get()) <= 0) n = 0;
+		break;
+	case LE:
+		if (strcmp(el.get_name(), name.get()) > 0) n = 0;
+		break;
+	case GE:
+		if (strcmp(el.get_name(), name.get()) < 0) n = 0;
+		break;
+	case LIKE:
+		n = string_like(el.get_name(), name.get());
+		break;
+	case COND_NONE: n = 0; break;
+	}
+	switch(c_phone) {
+	case EQ:
+		if (el.get_phone() != phone) p = 0;
+		break;
+	case NE:
+		if (el.get_phone() == phone) p = 0;
+		break;
+	case LT:
+		if (el.get_phone() >= phone) p = 0;
+		break;
+	case GT:
+		if (el.get_phone() <= phone) p = 0;
+		break;
+	case LE:
+		if (el.get_phone() > phone) p = 0;
+		break;
+	case GE:
+		if (el.get_phone() < phone) p = 0;
+		break;
+	case LIKE:
+		if (el.get_phone() != phone) p = 0;
+		break;
+	case COND_NONE: p = 0; break;
+	}
+	switch(c_group) {
+	case EQ:
+		if (el.get_group() != group) g = 0;
+		break;
+	case NE:
+		if (el.get_group() == group) g = 0;
+		break;
+	case LT:
+		if (el.get_group() >= group) g = 0;
+		break;
+	case GT:
+		if (el.get_group() <= group) g = 0;
+		break;
+	case LE:
+		if (el.get_group() > group) g = 0;
+		break;
+	case GE:
+		if (el.get_group() < group) g = 0;
+		break;
+	case LIKE:
+		if (el.get_group() != group) g = 0;
+		break;
+	case COND_NONE: g = 0; break;
+	}
+	if (c_name == COND_NONE && c_phone == COND_NONE
+							&& c_group == COND_NONE) return 1;
+	if (cond_order & ORDER_N_1) c1 = n;
+	else if (cond_order & ORDER_P_1) c1 = p;
+	else if (cond_order & ORDER_G_1) c1 = g;
+	if (cond_order & ORDER_N_2) c2 = n;
+	else if (cond_order & ORDER_P_2) c2 = p;
+	else if (cond_order & ORDER_G_2) c2 = g;
+	if (cond_order & ORDER_N_3) c3 = n;
+	else if (cond_order & ORDER_P_3) c3 = p;
+	else if (cond_order & ORDER_G_3) c3 = g;
+	switch (oper1) {
+	case AND:
+		switch (oper2) {
+		case AND: return c1 * c2 * c3;
+		case OR: return c1 * c2 + c3;
+		case OP_NONE: return c1 * c2;
+		}
+	case OR:
+		switch (oper2) {
+		case AND: return c1 + c2 * c3;
+		case OR: return c1 + c2 + c3;
+		case OP_NONE: return c1 + c2;
+		}
+	case OP_NONE: return c1;
+	}
+	return c1 + c2 + c3;
+}
+
+static int string_like(const char * s, const char * x) {
+	int i = 0;
+	int l = 0;
+	for (; *x && *s; x++, s++) {
+		if (*x == '\\') {
+			x++;
+			if (*x != *s) return 0;
+		} else if (*x != '_') {
+			if (*x != '%') {
+				if (*x != *s) return 0;
+			} else {
+				l = strlen(s);
+				for (i = 0; i <= l; i++)
+					if (string_like(s + i, x + 1)) return 1;
+				if (i == l + 1) return 0;
+			}
+		}
+	}
+	if (*s) return 0;
+	while (*x) {
+		if (*x != '%') return 0;
+		x++;
+	}
+
+	return 1;
 }
 
 void Command::clear() {
