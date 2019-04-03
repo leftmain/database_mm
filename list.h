@@ -68,7 +68,14 @@ template <class T>
 err_code List<T>::read(FILE * fp) {
 	Node<T> c;
 	err_code res = ALL_RIGHT;
-	while (!(res = c.read(fp))) { res = insert(c); }
+	while (!(res = c.read(fp))) {
+		auto s = head;
+		s = new Node<T>(c);
+		if (!s) res = MEM_ERR;
+		s->set_next(head);
+		head = s;
+		res = ALL_RIGHT;
+	}
 	if (res == MEM_ERR || !feof(fp)) return res;
 	return ALL_RIGHT;
 }

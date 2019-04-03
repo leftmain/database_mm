@@ -18,6 +18,7 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 
+//fprintf(stderr, "#\n");
 	if ((res = l.read(fp)) != ALL_RIGHT) {
 		switch (res) {
 		case CANNOT_OPEN:
@@ -37,7 +38,7 @@ int main(int argc, char ** argv) {
 	}
 	fclose(fp);
 	
-	l.print();
+//	l.print();
 
 	t = clock();
 	while (fgets(buf, LEN, stdin)) {
