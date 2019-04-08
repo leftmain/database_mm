@@ -1,15 +1,11 @@
-#include "command.h"
-#include "list.h"
+#include "header.h"
+#include "database.h"
 
 int main(int argc, char ** argv) {
-	Command c;
-	List<Record> l;
-	char buf[LEN];
+	Database<Record> d;
 	const char * file = "a.txt";
-	double t = 0;
 	FILE * fp = nullptr;
-	err_code res = ALL_RIGHT;
-	int res_i = 0;
+	int res = 0;
 
 	if (argc > 1) file = argv[1];
 
@@ -18,8 +14,7 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 
-//fprintf(stderr, "#\n");
-	if ((res = l.read(fp)) != ALL_RIGHT) {
+	if ((res = d.read(fp)) != ALL_RIGHT) {
 		switch (res) {
 		case CANNOT_OPEN:
 			fprintf(stderr, "Cannot open file %s\n", file);
@@ -30,7 +25,6 @@ int main(int argc, char ** argv) {
 		case MEM_ERR:
 			fprintf(stderr, "Memory error\n");
 			break;
-		case EXIT: break;
 		case ALL_RIGHT: break;
 		}
 		fclose(fp);
@@ -38,19 +32,7 @@ int main(int argc, char ** argv) {
 	}
 	fclose(fp);
 	
-//	l.print();
-
-	t = clock();
-	while (fgets(buf, LEN, stdin)) {
-		res_i = c.parse(buf);
-		if (res_i) l.apply_command(c);
-		else if (c.get_type() == QUIT) break;
-		c.clear();
-	}
-	printf("\n");
-	t = (clock() - t) / CLOCKS_PER_SEC;
-
-	fprintf(stderr, "Time: %.2lf\n", t);
+	d.start();
 
 	return 0;
 }

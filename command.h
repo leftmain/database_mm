@@ -82,10 +82,11 @@ public:
 	~Command() {}
 
 	int parse(const char *);
-	void print();
+	void print(FILE * fp = stdout);
 	void clear();
 	int check(const Record&);
 
+	Record * get_record(void) const { return (Record *)this; }
 	cmd_type get_type(void) const { return type; }
 	cond_type get_c_name(void) const { return c_name; }
 	cond_type get_c_phone(void) const { return c_phone; }
@@ -141,32 +142,32 @@ int Command::set_cond(char * buf, int field) {
 int Command::set_field(char * buf, int field, int order) {
 	order *= 3;
 	switch (field) {
-	case F_NAME:
-		cond_order |= (ORDER_N_1 << order);
-//				name = std::make_unique<char []>(strlen(buf) + 1);
-		name = std::unique_ptr<char []>(new char[strlen(buf) + 1]);
-		if (!name) {
-			perror("memory error");
-			return 1;
-		}
-		strcpy(name.get(), buf);
-		break;
-	case F_PHONE:
-		cond_order |= (ORDER_P_1 << order);
-		if ((phone = atoi(buf)) <= 0) {
-			perror("syntax error");
-			return 1;
-		}
-		break;
-	case F_GROUP:
-		cond_order |= (ORDER_G_1 << order);
-		if ((group = atoi(buf)) <= 0) {
-			perror("syntax error");
-			return 1;
-		}
-		break;
-	default:
-		perror("unknown field");
+		case F_NAME:
+			cond_order |= (ORDER_N_1 << order);
+	//				name = std::make_unique<char []>(strlen(buf) + 1);
+			name = std::unique_ptr<char []>(new char[strlen(buf) + 1]);
+			if (!name) {
+				perror("memory error");
+				return 1;
+			}
+			strcpy(name.get(), buf);
+			break;
+		case F_PHONE:
+			cond_order |= (ORDER_P_1 << order);
+			if ((phone = atoi(buf)) <= 0) {
+				perror("syntax error");
+				return 1;
+			}
+			break;
+		case F_GROUP:
+			cond_order |= (ORDER_G_1 << order);
+			if ((group = atoi(buf)) <= 0) {
+				perror("syntax error");
+				return 1;
+			}
+			break;
+		default:
+			perror("unknown field");
 	}
 	return 0;
 }
@@ -245,38 +246,38 @@ int Command::parse(const char * str) {
 
 void Command::print_c_cond(cond_type t) {
 	switch (t) {
-	case EQ: strcat(buf, " = "); return;
-	case NE: strcat(buf, " <> "); return;
-	case LT: strcat(buf, " < "); return;
-	case GT: strcat(buf, " > "); return;
-	case LE: strcat(buf, " <= "); return;
-	case GE: strcat(buf, " >= "); return;
-	case LIKE: strcat(buf, " like "); return;
-	case COND_NONE: return;
-//	default: perror("unknown cond");
+		case EQ: strcat(buf, " = "); return;
+		case NE: strcat(buf, " <> "); return;
+		case LT: strcat(buf, " < "); return;
+		case GT: strcat(buf, " > "); return;
+		case LE: strcat(buf, " <= "); return;
+		case GE: strcat(buf, " >= "); return;
+		case LIKE: strcat(buf, " like "); return;
+		case COND_NONE: return;
+//		default: perror("unknown cond");
 	}
 }
 void Command::print_one_cond(int field) {
 	switch (field) {
-	case F_NAME:
-		strcat(buf, " name");
-		print_c_cond(c_name);
-		strcat(buf, name.get());
-		break;
-	case F_PHONE:
-		strcat(buf, " phone");
-		print_c_cond(c_phone);
-		sprintf(buf + strlen(buf), "%d", phone);
-//		itoa(phone, buf + strlen(buf), 10);
-		break;
-	case F_GROUP:
-		strcat(buf, " group");
-		print_c_cond(c_group);
-		sprintf(buf + strlen(buf), "%d", group);
-//		itoa(group, buf + strlen(buf), 10);
-		break;
-	default:
-		perror("unknown field");
+		case F_NAME:
+			strcat(buf, " name");
+			print_c_cond(c_name);
+			strcat(buf, name.get());
+			break;
+		case F_PHONE:
+			strcat(buf, " phone");
+			print_c_cond(c_phone);
+			sprintf(buf + strlen(buf), "%d", phone);
+	//		itoa(phone, buf + strlen(buf), 10);
+			break;
+		case F_GROUP:
+			strcat(buf, " group");
+			print_c_cond(c_group);
+			sprintf(buf + strlen(buf), "%d", group);
+	//		itoa(group, buf + strlen(buf), 10);
+			break;
+		default:
+			perror("unknown field");
 	}
 }
 
@@ -305,30 +306,31 @@ void Command::print_cond() {
 	else { perror("print_cond_3 error"); return; }
 }
 
-void Command::print() {
+void Command::print(FILE * fp) {
 	memset(buf, 0, LEN);
 	switch (type) {
-	case QUIT:
-		printf("quit;\n");
-		return;
-	case STOP:
-		printf("stop;\n");
-		return;
-	case SELECT:
-		strcat(buf, "select * where");
-		print_cond();
-		printf("%s;\n", buf);
-		return;
-	case INSERT:
-		printf("insert (%s, %d, %d);\n", name.get(), phone, group);
-		return;
-	case DELETE:
-		strcat(buf, "delete where");
-		print_cond();
-		printf("%s;\n", buf);
-		return;
-	case CMD_NONE:
-		return;
+		case QUIT:
+			fprintf(fp, "quit;\n");
+			return;
+		case STOP:
+			fprintf(fp, "stop;\n");
+			return;
+		case SELECT:
+			strcat(buf, "select * where");
+			print_cond();
+			fprintf(fp, "%s;\n", buf);
+			return;
+		case INSERT:
+			fprintf(fp, "insert (%s, %d, %d);\n", \
+					name.get(), phone, group);
+			return;
+		case DELETE:
+			strcat(buf, "delete where");
+			print_cond();
+			fprintf(fp, "%s;\n", buf);
+			return;
+		case CMD_NONE:
+			return;
 	}
 }
 
@@ -336,76 +338,76 @@ int Command::check(const Record& el) {
 	int n = 1, p = 1, g = 1;
 	int c1 = 0, c2 = 0, c3 = 0;
 	switch(c_name) {
-	case EQ:
-		if (strcmp(el.get_name(), name.get())) n = 0;
-		break;
-	case NE:
-		if (!strcmp(el.get_name(), name.get())) n = 0;
-		break;
-	case LT:
-		if (strcmp(el.get_name(), name.get()) >= 0) n = 0;
-		break;
-	case GT:
-		if (strcmp(el.get_name(), name.get()) <= 0) n = 0;
-		break;
-	case LE:
-		if (strcmp(el.get_name(), name.get()) > 0) n = 0;
-		break;
-	case GE:
-		if (strcmp(el.get_name(), name.get()) < 0) n = 0;
-		break;
-	case LIKE:
-		n = string_like(el.get_name(), name.get());
-		break;
-	case COND_NONE: n = 0; break;
+		case EQ:
+			if (strcmp(el.get_name(), name.get())) n = 0;
+			break;
+		case NE:
+			if (!strcmp(el.get_name(), name.get())) n = 0;
+			break;
+		case LT:
+			if (strcmp(el.get_name(), name.get()) >= 0) n = 0;
+			break;
+		case GT:
+			if (strcmp(el.get_name(), name.get()) <= 0) n = 0;
+			break;
+		case LE:
+			if (strcmp(el.get_name(), name.get()) > 0) n = 0;
+			break;
+		case GE:
+			if (strcmp(el.get_name(), name.get()) < 0) n = 0;
+			break;
+		case LIKE:
+			n = string_like(el.get_name(), name.get());
+			break;
+		case COND_NONE: n = 0;
 	}
 	switch(c_phone) {
-	case EQ:
-		if (el.get_phone() != phone) p = 0;
-		break;
-	case NE:
-		if (el.get_phone() == phone) p = 0;
-		break;
-	case LT:
-		if (el.get_phone() >= phone) p = 0;
-		break;
-	case GT:
-		if (el.get_phone() <= phone) p = 0;
-		break;
-	case LE:
-		if (el.get_phone() > phone) p = 0;
-		break;
-	case GE:
-		if (el.get_phone() < phone) p = 0;
-		break;
-	case LIKE:
-		if (el.get_phone() != phone) p = 0;
-		break;
-	case COND_NONE: p = 0; break;
+		case EQ:
+			if (el.get_phone() != phone) p = 0;
+			break;
+		case NE:
+			if (el.get_phone() == phone) p = 0;
+			break;
+		case LT:
+			if (el.get_phone() >= phone) p = 0;
+			break;
+		case GT:
+			if (el.get_phone() <= phone) p = 0;
+			break;
+		case LE:
+			if (el.get_phone() > phone) p = 0;
+			break;
+		case GE:
+			if (el.get_phone() < phone) p = 0;
+			break;
+		case LIKE:
+			if (el.get_phone() != phone) p = 0;
+			break;
+		case COND_NONE: p = 0;
 	}
 	switch(c_group) {
-	case EQ:
-		if (el.get_group() != group) g = 0;
-		break;
-	case NE:
-		if (el.get_group() == group) g = 0;
-		break;
-	case LT:
-		if (el.get_group() >= group) g = 0;
-		break;
-	case GT:
-		if (el.get_group() <= group) g = 0;
-		break;
-	case LE:
-		if (el.get_group() > group) g = 0;
-		break;
-	case GE:
-		if (el.get_group() < group) g = 0;
-		break;
-	case LIKE:
-		if (el.get_group() != group) g = 0;
-		break;
-	case COND_NONE: g = 0; break;
+		case EQ:
+			if (el.get_group() != group) g = 0;
+			break;
+		case NE:
+			if (el.get_group() == group) g = 0;
+			break;
+		case LT:
+			if (el.get_group() >= group) g = 0;
+			break;
+		case GT:
+			if (el.get_group() <= group) g = 0;
+			break;
+		case LE:
+			if (el.get_group() > group) g = 0;
+			break;
+		case GE:
+			if (el.get_group() < group) g = 0;
+			break;
+		case LIKE:
+			if (el.get_group() != group) g = 0;
+			break;
+		case COND_NONE: g = 0;
 	}
 	if (c_name == COND_NONE && c_phone == COND_NONE
 							&& c_group == COND_NONE) return 1;
@@ -419,19 +421,19 @@ int Command::check(const Record& el) {
 	else if (cond_order & ORDER_P_3) c3 = p;
 	else if (cond_order & ORDER_G_3) c3 = g;
 	switch (oper1) {
-	case AND:
-		switch (oper2) {
-		case AND: return c1 * c2 * c3;
-		case OR: return c1 * c2 + c3;
-		case OP_NONE: return c1 * c2;
-		}
-	case OR:
-		switch (oper2) {
-		case AND: return c1 + c2 * c3;
-		case OR: return c1 + c2 + c3;
-		case OP_NONE: return c1 + c2;
-		}
-	case OP_NONE: return c1;
+		case AND:
+			switch (oper2) {
+				case AND: return c1 * c2 * c3;
+				case OR: return c1 * c2 + c3;
+				case OP_NONE: return c1 * c2;
+			}
+		case OR:
+			switch (oper2) {
+				case AND: return c1 + c2 * c3;
+				case OR: return c1 + c2 + c3;
+				case OP_NONE: return c1 + c2;
+			}
+		case OP_NONE: return c1;
 	}
 	return c1 + c2 + c3;
 }
