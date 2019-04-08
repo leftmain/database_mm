@@ -1,9 +1,19 @@
-F = -std=c++11 -O3
+F = -std=c++11 -g
+H = header.h \
+	record.h \
+	command.h \
+	list_node.h \
+	list.h \
+	stack_node.h \
+	stack.h \
+	btree_node.h \
+	btree.h \
+	database.h
 all: a
 
-a: main.o record.h command.h makefile
+a: main.o $H makefile
 	g++ main.o -o a
-main.o: main.cpp record.h command.h errors.h list.h
+main.o: main.cpp $H
 	g++ $F -c main.cpp
 
 clean:
