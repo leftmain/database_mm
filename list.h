@@ -1,27 +1,12 @@
 #ifndef LIST_H
 #define LIST_H
 
+#include "header.h"
+#include "command.h"
+#include "list_node.h"
+#include "stack.h"
+
 #define MAX_PRINT 20
-
-template <class T>
-class Node : public T
-{
-private:
-	Node * next;
-
-public:
-	Node(const char * n = 0, int p = 0, int g = 0) : T(n, p, g) { next = 0; }
-	Node(const T& i) : T(i) { next = 0; }
-	~Node() { next = 0; }
-	Node& operator=(const Node& rhs) {
-		*((T *)this) = rhs;
-		next = 0;
-		return *this;
-	}
-	Node * get_next() const { return next; }
-	void set_next(Node * n) { next = n; }
-
-};
 
 template <class T>
 class List
@@ -32,22 +17,29 @@ private:
 	int size = 0;
 
 	void delete_list();
-	err_code insert(Record&);
-	void delete_(Command&);
-	void select(Command&);
-
 
 public:
-	List() { head = curr = 0; }
+	List() {}
 	~List() { delete_list(); }
 
-	err_code read(FILE * fp = stdin);
+	Node<T> * add(T&);
+	int read(FILE * fp = stdin);
 	void print(FILE * fp = stdout);
-	err_code apply_command(Command&);
+	void print_back(FILE * fp = stdout);
+	void delete_node(Node<T> *);
+	void delete_from_stack(Stack<Node<T> *> *);
+	void add_node(Node<T> *);
+
+	int insert(T&);
+	void delete_(Command&);
+	void select(Command&, FILE * fp = stdout);
+	void remove(Node<T> *);
 
 	void goto_head() { curr = head; }
 	void goto_next() { curr = curr->get_next(); }
+	void goto_prev() { curr = curr->get_prev(); }
 	void set_head(Node<T> * h) { head = h; }
+	void set_curr(Node<T> * c) { curr = c; }
 	Node<T> * get_head() const { return head; }
 	Node<T> * get_curr() const { return curr; }
 	int get_size() const { return size; }
@@ -62,19 +54,27 @@ void List<T>::delete_list() {
 		delete c;
 		c = curr;
 	}
+	head = curr = nullptr;
 }
 
 template <class T>
-err_code List<T>::read(FILE * fp) {
-	Node<T> c;
-	err_code res = ALL_RIGHT;
-	while (!(res = c.read(fp))) {
-		auto s = head;
-		s = new Node<T>(c);
-		if (!s) res = MEM_ERR;
-		s->set_next(head);
-		head = s;
-		res = ALL_RIGHT;
+Node<T> * List<T>::add(T& n) {
+	auto c = new Node<T>;
+	if (!c) return nullptr;
+	c->move(n);
+	c->set_next(head);
+	if (head) head->set_prev(c);
+	head = c;
+	return head;
+}
+
+template <class T>
+int List<T>::read(FILE * fp) {
+	T c;
+	int res = 0;
+	if (head) delete_list();
+	while ((res = c.read(fp)) == ALL_RIGHT) {
+		if (!add(c)) return MEM_ERR;
 	}
 	if (res == MEM_ERR || !feof(fp)) return res;
 	return ALL_RIGHT;
@@ -82,16 +82,45 @@ err_code List<T>::read(FILE * fp) {
 
 template <class T>
 void List<T>::print(FILE * fp) {
+printf("list-------------------------\n");
 	auto c = head;
 	for (int i = 0; c && i < MAX_PRINT; i++, c = c->get_next()) {
-//		fprintf(fp, "%d) ", i);
 		c->print(fp);
 	}
-	printf("\n");
+	fprintf(fp, "\n");
+printf("-----------------------------\n");
 }
 
 template <class T>
-err_code List<T>::insert(Record& a) {
+void List<T>::print_back(FILE * fp) {
+	auto c = head;
+	if (!c) return;
+	while (c->get_next()) c = c->get_next();
+	for (int i = 0; c && i < MAX_PRINT; i++, c = c->get_prev()) {
+		c->print(fp);
+	}
+	fprintf(fp, "\n");
+}
+
+template <class T>
+void List<T>::delete_node(Node<T> * n) {
+	if (n == nullptr) return;
+	if (n->get_prev()) n->get_prev()->set_next(n->get_next());
+	else head = n->get_next();
+	if (n->get_next()) n->get_next()->set_prev(n->get_prev());
+	delete n;
+}
+
+template <class T>
+void List<T>::delete_from_stack(Stack<Node<T> *> * s) {
+	while (s->is_not_empty()) {
+		auto node = s->pop();
+		delete_node(node);
+	}
+}
+
+template <class T>
+int List<T>::insert(T& a) {
 	if (!head) {
 		head = new Node<T>(a);
 		if (!head) return MEM_ERR;
@@ -106,6 +135,7 @@ err_code List<T>::insert(Record& a) {
 		if (tmp->get_next()) return ALL_RIGHT;
 		tmp->set_next(new Node<T>(a));
 		if (!tmp->get_next()) return MEM_ERR;
+		tmp->get_next()->set_prev(tmp);
 	}
 	size++;
 	return ALL_RIGHT;
@@ -114,19 +144,12 @@ err_code List<T>::insert(Record& a) {
 template <class T>
 void List<T>::delete_(Command& cmd) {
 	auto tmp = head;
-	while (cmd.check(*head)) {
-		tmp = head;
-		if (head->get_next()) head = head->get_next();
-		else { delete tmp; head = curr = 0; return; }
-		delete tmp;
-		size--;
-	}
-	tmp = head;
-	while (tmp->get_next()) {
-		if (cmd.check(*tmp->get_next())) {
-			auto c = tmp->get_next();
-			tmp->set_next(c->get_next());
-			if (c == curr) curr = tmp;
+	while (tmp) {
+		if (cmd.check(*tmp)) {
+			auto c = tmp;
+			tmp = tmp->get_next();
+			if (tmp) tmp->set_prev(c->get_prev());
+			if (c->get_prev()) c->get_prev()->set_next(tmp);
 			delete c;
 			size--;
 		} else tmp = tmp->get_next();
@@ -134,31 +157,14 @@ void List<T>::delete_(Command& cmd) {
 }
 
 template <class T>
-void List<T>::select(Command& cmd) {
+void List<T>::select(Command& cmd, FILE * fp) {
 	auto tmp = head;
 	while (tmp) {
 		if (cmd.check(*tmp)) {
-			tmp->print();
+			tmp->print(fp);
 		}
 		tmp = tmp->get_next();
 	}
-}
-
-template <class T>
-err_code List<T>::apply_command(Command& c) {
-	switch (c.get_type()) {
-	case SELECT:
-		select(c);
-		break;
-	case INSERT: return insert(c);
-	case DELETE:
-		delete_(c);
-		break;
-	case QUIT: return EXIT;
-	case STOP: return EXIT;
-	case CMD_NONE: return EXIT;
-	}
-	return ALL_RIGHT;
 }
 
 #endif

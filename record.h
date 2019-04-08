@@ -1,12 +1,7 @@
 #ifndef RECORD_H
 #define RECORD_H
 
-#include <memory>
-#include <string.h>
-#include <stdio.h>
-#include "errors.h"
-
-#define LEN 1024
+#include "header.h"
 
 class Record 
 {
@@ -15,21 +10,23 @@ protected:
 	int phone = 0;
 	int group = 0;
 
-	err_code init(const char * = nullptr, int = 0, int = 0);
+	int init(const char * = nullptr, int = 0, int = 0);
 
 public:
-	Record(const Record& a) { init(a.name.get(), a.phone, a.group); }
-	Record(Record&& a) { name = std::move(a.name); phone = a.phone; group = a.group; }
-	Record(const char * n = nullptr, int p = 0, int g = 0) { init(n, p, g); }
+	Record(const Record&);
+	Record(Record&&);
+	Record(const char * = nullptr, int = 0, int = 0);
 	~Record() {}
 
 	Record& operator=(const Record&);
 	Record& operator=(Record&&);
-	void operator==(Record(&));
+	void operator==(Record&);
 	int operator<(const Record&) const;
-	err_code read(FILE *);
+	int read(FILE *);
 	void print(FILE * = stdout) const;
+	void draw(FILE * = stdout) const;
 	void swap(Record&);
+	void move(Record&);
 
 	char * get_name() const { return name.get(); }
 	int get_phone() const { return phone; }
@@ -37,7 +34,21 @@ public:
 
 };
 
-err_code Record::init(const char * n, int p, int g) {
+Record::Record(const Record& a) {
+	init(a.name.get(), a.phone, a.group);
+}
+
+Record::Record(Record&& a) {
+	name = std::move(a.name);
+	phone = a.phone;
+	group = a.group;
+}
+
+Record::Record(const char * n, int p, int g) {
+	init(n, p, g);
+}
+
+int Record::init(const char * n, int p, int g) {
 	phone = p;
 	group = g;
 	if (n) {
@@ -79,7 +90,7 @@ int Record::operator<(const Record& rhs) const {
 	return phone - rhs.phone;
 }
 
-err_code Record::read(FILE * fp) {
+int Record::read(FILE * fp) {
 	char buf[LEN];
 	int p = 0, g = 0;
 	if (fscanf(fp, "%s%d%d", buf, &p, &g) != 3) return CANNOT_READ;
@@ -90,6 +101,10 @@ void Record::print(FILE * fp) const {
 	fprintf(fp, "%s\t%d\t%d\n", name.get(), phone, group);
 }
 
+void Record::draw(FILE * fp) const {
+	fprintf(fp, "[%s %d %d] ", name.get(), phone, group);
+}
+
 void Record::swap(Record& a) {
 	name.swap(a.name);
 	int p = a.phone;
@@ -98,6 +113,12 @@ void Record::swap(Record& a) {
 	int g = a.group;
 	group = a.group;
 	a.group = g;
+}
+
+void Record::move(Record& a) {
+	name = std::move(a.name);
+	phone = a.phone;
+	group = a.group;
 }
 
 #endif
