@@ -12,8 +12,6 @@ private:
 	SNode<T> * top = nullptr;
 	SNode<T> * curr = nullptr;
 
-	void delete_stack();
-
 public:
 	Stack() {}
 	~Stack() { delete_stack(); }
@@ -23,6 +21,7 @@ public:
 	bool is_empty();
 	bool is_not_empty();
 	void print();
+	void delete_stack();
 
 	void goto_next() { curr = curr->get_next(); }
 	void goto_top() { curr = top; }
@@ -60,6 +59,7 @@ void Stack<T>::delete_stack() {
 		top = top->get_next();
 		delete c;
 	}
+	top = nullptr;
 }
 
 template <class T>

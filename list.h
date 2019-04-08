@@ -14,12 +14,13 @@ class List
 private:
 	Node<T> * head = nullptr;
 	Node<T> * curr = nullptr;
+	Stack<Node<T> *> * stack = nullptr;
 	int size = 0;
 
 	void delete_list();
 
 public:
-	List() {}
+	List(Stack<Node<T> *> * st) { stack = st; }
 	~List() { delete_list(); }
 
 	Node<T> * add(T&);
@@ -27,7 +28,7 @@ public:
 	void print(FILE * fp = stdout);
 	void print_back(FILE * fp = stdout);
 	void delete_node(Node<T> *);
-	void delete_from_stack(Stack<Node<T> *> *);
+	void delete_from_stack();
 	void add_node(Node<T> *);
 
 	int insert(T&);
@@ -112,11 +113,13 @@ void List<T>::delete_node(Node<T> * n) {
 }
 
 template <class T>
-void List<T>::delete_from_stack(Stack<Node<T> *> * s) {
-	while (s->is_not_empty()) {
-		auto node = s->pop();
-		delete_node(node);
+void List<T>::delete_from_stack() {
+	stack->goto_top();
+	while (stack->get_curr()) {
+		delete_node(stack->get_curr()->get_data());
+		stack->goto_next();
 	}
+	stack->goto_top();
 }
 
 template <class T>
@@ -147,6 +150,10 @@ void List<T>::delete_(Command& cmd) {
 	while (tmp) {
 		if (cmd.check(*tmp)) {
 			auto c = tmp;
+			if (stack->push(tmp)) {
+				perror("memory error in stack\n");
+				return;
+			}
 			tmp = tmp->get_next();
 			if (tmp) tmp->set_prev(c->get_prev());
 			if (c->get_prev()) c->get_prev()->set_next(tmp);

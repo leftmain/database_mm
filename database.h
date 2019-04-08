@@ -11,13 +11,14 @@ class Database
 private:
 	List<T> list;
 	BTree<Node<T> *> btree;
+	Stack<Node<T> *> stack;
 
 	int insert(T&);
 	void delete_(Command&);
 	void select(Command&, FILE * = stdout);
 
 public:
-	Database() : btree(2) {}
+	Database() : list(&stack), btree(2, &stack) {}
 	~Database() {}
 
 	int read(FILE *);
@@ -95,9 +96,14 @@ int Database<T>::insert(T& a) {
 
 template <class T>
 void Database<T>::delete_(Command& cmd) {
-	if (cmd.get_c_phone() != COND_NONE && cmd.get_c_phone() != NE)
-		list.delete_from_stack(btree.delete_(cmd));
-	else list.delete_(cmd);
+	if (cmd.get_c_phone() != COND_NONE && cmd.get_c_phone() != NE) {
+		btree.delete_(cmd);
+		list.delete_from_stack();
+	} else {
+		list.delete_(cmd);
+		btree.delete_from_stack();
+	}
+	stack.delete_stack();
 }
 
 template <class T>

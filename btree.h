@@ -13,9 +13,9 @@ template <class T>
 class BTree
 {
 private:
-	Stack<T> stack;
 	BNode<T> * root = nullptr;
 	BNode<T> * curr = nullptr;
+	Stack<T> * stack = nullptr;
 	int m = 0;
 
 	BNode<T> * add(T *, BNode<T> *);
@@ -32,7 +32,7 @@ private:
 								BNode<T> * = nullptr);
 
 public:
-	BTree(int);
+	BTree(int, Stack<T> *);
 	~BTree();
 
 	int add(T);
@@ -44,10 +44,10 @@ public:
 	BNode<T> * get_root() const { return root; }
 	void set_curr(BNode<T> * c) { curr = c; }
 	void set_root(BNode<T> * r) { root = r; }
-	Stack<T> * get_stack() { return &stack; }
 
 	void select(Command&, FILE * = stdout);
-	Stack<T> * delete_(Command&);
+	void delete_(Command&);
+	void delete_from_stack();
 	void search(Command&, BNode<T> *, int, FILE * = stdout);
 
 };
@@ -65,8 +65,9 @@ void BTree<T>::delete_tree(BNode<T> * r) {
 }
 
 template <class T>
-BTree<T>::BTree(int mm) {
+BTree<T>::BTree(int mm, Stack<T> * st) {
 	m = mm;
+	stack = st;
 }
 
 template <class T>
@@ -240,7 +241,7 @@ void BTree<T>::merge(BNode<T> * r, int i) {
 	}
 	(*r)--;
 	dest->set_len(2 * m);
-	if (src->get_child()) delete [] src_ptr.get_child();
+	if (src_ptr.get_child()) delete [] src_ptr.get_child();
 	delete [] src_ptr.get_data();
 	if (r == root && r->get_len() == 0) {
 		auto c = *dest;
@@ -301,21 +302,25 @@ T BTree<T>::delete_element(T a, BNode<T> * r, bool found) {
 }
 
 template <class T>
-Stack<T> * BTree<T>::delete_(Command& cmd) {
-	search(cmd, root, SAVE_IN_STACK);
-	stack.goto_top();
-	while (stack.get_curr()) {
-		delete_element(stack.get_curr()->get_data(), root);
-		stack.goto_next();
+void BTree<T>::delete_from_stack() {
+	stack->goto_top();
+	while (stack->get_curr()) {
+		delete_element(stack->get_curr()->get_data(), root);
+		stack->goto_next();
 	}
-	stack.goto_top();
-	return &stack;
+	stack->goto_top();
+}
+
+template <class T>
+void BTree<T>::delete_(Command& cmd) {
+	search(cmd, root, SAVE_IN_STACK);
+	delete_from_stack();
 }
 
 template <class T>
 void BTree<T>::process(T a, int flag) {
 	if (flag & PRINT) a->print();
-	else if (flag & SAVE_IN_STACK) stack.push(a);
+	else if (flag & SAVE_IN_STACK) stack->push(a);
 }
 
 template <class T>
