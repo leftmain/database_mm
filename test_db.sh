@@ -27,10 +27,11 @@ for data in ${data}
         data_file="${datadir}/${data}"
         cmd_file="${cmddir}/${cmd}"
         echo "Data=${data_file} Commands=${cmd_file}"
-        cat ${cmd_file} | ./a ${data_file} | grep '^ *Student' | wc >> res1.txt
+#        cat ${cmd_file} | ./a ${data_file} | grep '^ *Student' | wc >> res1.txt
+        cat ${cmd_file} | ./a ${data_file} | grep '^ *Student' | wc
       done
   done
 
-diff -C0 res1.txt res.txt
-rm res1.txt
+#diff -C0 res1.txt res.txt
+#rm res1.txt
 
