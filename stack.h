@@ -4,6 +4,9 @@
 #include "stack_node.h"
 
 #define MAX_STACK_PRINT 10
+#define SAVE_IN_STACK	(1 << 0)
+#define PRINT        	(1 << 1)
+#define REMOVE       	(1 << 2)
 
 template <class T>
 class Stack
@@ -57,6 +60,7 @@ void Stack<T>::delete_stack() {
 	while (top) {
 		c = top;
 		top = top->get_next();
+		delete c->get_data();
 		delete c;
 	}
 	top = nullptr;

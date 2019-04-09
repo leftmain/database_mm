@@ -27,11 +27,11 @@ public:
 	int read(FILE * fp = stdin);
 	void print(FILE * fp = stdout);
 	void print_back(FILE * fp = stdout);
-	void delete_node(Node<T> *);
+	Node<T> * delete_node(Node<T> *, int = REMOVE);
 	void delete_from_stack();
 	void add_node(Node<T> *);
 
-	int insert(T&);
+	Node<T> * insert(T&);
 	void delete_(Command&);
 	void select(Command&, FILE * fp = stdout);
 	void remove(Node<T> *);
@@ -56,6 +56,7 @@ void List<T>::delete_list() {
 		c = curr;
 	}
 	head = curr = nullptr;
+	size = 0;
 }
 
 template <class T>
@@ -66,6 +67,7 @@ Node<T> * List<T>::add(T& n) {
 	c->set_next(head);
 	if (head) head->set_prev(c);
 	head = c;
+	size++;
 	return head;
 }
 
@@ -83,13 +85,13 @@ int List<T>::read(FILE * fp) {
 
 template <class T>
 void List<T>::print(FILE * fp) {
-printf("list-------------------------\n");
+printf("list-------------------------\\\n");
 	auto c = head;
 	for (int i = 0; c && i < MAX_PRINT; i++, c = c->get_next()) {
 		c->print(fp);
 	}
 	fprintf(fp, "\n");
-printf("-----------------------------\n");
+printf("-----------------------------/\n");
 }
 
 template <class T>
@@ -104,44 +106,64 @@ void List<T>::print_back(FILE * fp) {
 }
 
 template <class T>
-void List<T>::delete_node(Node<T> * n) {
-	if (n == nullptr) return;
-	if (n->get_prev()) n->get_prev()->set_next(n->get_next());
-	else head = n->get_next();
-	if (n->get_next()) n->get_next()->set_prev(n->get_prev());
-	delete n;
+Node<T> * List<T>::delete_node(Node<T> * n, int flag) {
+	if (n == nullptr) return nullptr;
+	if (n == head) {
+		head = head->get_next();
+		head->set_prev(nullptr);
+		if (flag & REMOVE) delete n;
+		size--;
+		return head;
+	}
+	auto ret = n->get_next();
+	if (n->get_prev()) n->get_prev()->set_next(ret);
+	else head = ret;
+	if (n->get_next()) ret->set_prev(n->get_prev());
+	if (flag & REMOVE) delete n;
+	size--;
+	return ret;
 }
 
 template <class T>
 void List<T>::delete_from_stack() {
 	stack->goto_top();
 	while (stack->get_curr()) {
-		delete_node(stack->get_curr()->get_data());
+		delete_node(stack->get_curr()->get_data(), SAVE_IN_STACK);
 		stack->goto_next();
 	}
 	stack->goto_top();
 }
 
 template <class T>
-int List<T>::insert(T& a) {
+void List<T>::add_node(Node<T> * n) {
+	n->set_next(head);
+	head->set_prev(n);
+	head = n;
+	size++;
+}
+
+template <class T>
+Node<T> * List<T>::insert(T& a) {
 	if (!head) {
 		head = new Node<T>(a);
-		if (!head) return MEM_ERR;
+		if (!head) return nullptr;
 		curr = head;
+		size++;
+		return head;
 	} else {
 		auto tmp = head;
-		if ((a < *head) == 0) return ALL_RIGHT;
+		if ((a < *head) == 0) return nullptr;
 		while (tmp->get_next()) {
 			if ((a < *(tmp->get_next())) == 0) break;
 			tmp = tmp->get_next();
 		}
-		if (tmp->get_next()) return ALL_RIGHT;
+		if (tmp->get_next()) return nullptr;
 		tmp->set_next(new Node<T>(a));
-		if (!tmp->get_next()) return MEM_ERR;
+		if (!tmp->get_next()) return nullptr;
 		tmp->get_next()->set_prev(tmp);
+		size++;
+		return tmp->get_next();
 	}
-	size++;
-	return ALL_RIGHT;
 }
 
 template <class T>
@@ -154,11 +176,7 @@ void List<T>::delete_(Command& cmd) {
 				perror("memory error in stack\n");
 				return;
 			}
-			tmp = tmp->get_next();
-			if (tmp) tmp->set_prev(c->get_prev());
-			if (c->get_prev()) c->get_prev()->set_next(tmp);
-			delete c;
-			size--;
+			tmp = delete_node(tmp, SAVE_IN_STACK);
 		} else tmp = tmp->get_next();
 	}
 }

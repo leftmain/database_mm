@@ -4,6 +4,10 @@
 #include "header.h"
 #include "list.h"
 #include "btree.h"
+#include "rbtree.h"
+
+#define BTREE 0
+#define DEBUG_PRINT 0
 
 template <class T>
 class Database
@@ -11,6 +15,7 @@ class Database
 private:
 	List<T> list;
 	BTree<Node<T> *> btree;
+	RBTree<Node<T> *> rbtree;
 	Stack<Node<T> *> stack;
 
 	int insert(T&);
@@ -18,12 +23,12 @@ private:
 	void select(Command&, FILE * = stdout);
 
 public:
-	Database() : list(&stack), btree(2, &stack) {}
+	Database() : list(&stack), btree(2, &stack), rbtree(&stack) {}
 	~Database() {}
 
 	int read(FILE *);
 	int apply_command(Command&, FILE * = stdout);
-	void start(FILE * = stdin, FILE * = stderr);
+	void start(FILE * = stdin, FILE * = stdout);
 
 };
 
@@ -34,7 +39,13 @@ int Database<T>::read(FILE * fp) {
 	Node<T> * node = nullptr;
 	while ((res = c.read(fp)) == ALL_RIGHT) {
 		if ((node = list.add(c)) == nullptr) return MEM_ERR;
+if (BTREE) {
 		if ((res = btree.add(node))) return MEM_ERR;
+} else {
+		res = rbtree.add(node);
+		if (res == MEM_ERR) return MEM_ERR;
+		else if (res == EQUAL) continue;
+}
 	}
 	if (res == MEM_ERR || !feof(fp)) return res;
 	return ALL_RIGHT;
@@ -64,55 +75,93 @@ void Database<T>::start(FILE * in, FILE * out) {
 	char buf[LEN];
 	double t = 0.;
 	int res = 0;
-list.print();
-btree.print();
-//return;
-/*
-btree.delete_(list.get_head()->get_next());
-btree.delete_(list.get_head());
-btree.get_stack()->print();
-list.delete_from_stack(btree.get_stack());
-//btree.delete_element(list.get_head(), btree.get_root());
-list.print();
-btree.print();
-return;
-*/
+if (DEBUG_PRINT) {
+	list.print();
+	if (BTREE) btree.print();
+	else rbtree.print();
+}
 	while (fgets(buf, LEN, in)) {
 		res = c.parse(buf);
-		if (res) apply_command(c);
+if (DEBUG_PRINT) {
+	fprintf(stderr, "# ");
+	c.print();
+}
+		if (res) apply_command(c, out);
 		else if (c.get_type() == QUIT) break;
+if (DEBUG_PRINT) {
+	list.print();
+	if (BTREE) btree.print();
+	else rbtree.print();
+}
 		c.clear();
-list.print();
-btree.print();
 	}
 	t = (clock() - t) / CLOCKS_PER_SEC;
-	fprintf(out, "Time: %.2lf\n", t);
+	fprintf(stderr, "Time: %.2lf\n", t);
 }
 
 template <class T>
 int Database<T>::insert(T& a) {
-	list.insert(a);
+	Node<T> * node = new Node<T>(a);
+if (BTREE) {
+	if (btree.add(node) == 0) list.add_node(node);
+	else delete node;
+} else {
+	if (rbtree.add(node) == ALL_RIGHT) list.add_node(node);
+	else delete node;
+}
 }
 
 template <class T>
 void Database<T>::delete_(Command& cmd) {
-	if (cmd.get_c_phone() != COND_NONE && cmd.get_c_phone() != NE) {
+if (BTREE) {
+	if (cmd.get_c_phone() != COND_NONE &&
+			cmd.get_c_phone() != NE &&
+			cmd.get_oper() != OR &&
+			cmd.get_oper1() != OR) {
 		btree.delete_(cmd);
 		list.delete_from_stack();
 	} else {
 		list.delete_(cmd);
 		btree.delete_from_stack();
 	}
+} else {
+	if (cmd.get_c_name() != COND_NONE &&
+			cmd.get_c_name() != NE &&
+			cmd.get_c_name() != LIKE &&
+			cmd.get_oper() != OR &&
+			cmd.get_oper1() != OR) {
+		rbtree.delete_(cmd);
+		list.delete_from_stack();
+	} else {
+		list.delete_(cmd);
+		rbtree.delete_from_stack();
+	}
+}
 	stack.delete_stack();
 }
 
 template <class T>
 void Database<T>::select(Command& cmd, FILE * fp) {
-	if (cmd.get_c_phone() == COND_NONE || cmd.get_c_phone() == NE) {
-		list.select(cmd, fp);
-	} else {
+if (BTREE) {
+	if (cmd.get_c_phone() != COND_NONE &&
+			cmd.get_c_phone() != NE &&
+			cmd.get_oper() != OR &&
+			cmd.get_oper1() != OR) {
 		btree.select(cmd, fp);
+	} else {
+		list.select(cmd, fp);
 	}
+} else {
+	if (cmd.get_c_name() != COND_NONE &&
+			cmd.get_c_name() != NE &&
+			cmd.get_c_name() != LIKE &&
+			cmd.get_oper() != OR &&
+			cmd.get_oper1() != OR) {
+		rbtree.select(cmd, fp);
+	} else {
+		list.select(cmd, fp);
+	}
+}
 }
 
 #endif

@@ -8,6 +8,8 @@ H = header.h \
 	stack.h \
 	btree_node.h \
 	btree.h \
+	rbtree_node.h \
+	rbtree.h \
 	database.h
 all: a
 

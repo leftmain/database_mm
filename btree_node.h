@@ -5,7 +5,7 @@
 #include "list_node.h"
 
 #define EQUAL_ON_RIGHT 1
-#define MAX_NODE_PRINT 10
+#define MAX_NODE_PRINT 5
 
 template <class T>
 int cmp(const T, const T);
@@ -84,8 +84,9 @@ int BNode<T>::alloc_child(int m) {
 
 template <class T>
 int BNode<T>::add(T a, int m) {
-	if (len == 2 * m) return 1;
 	int i = bin_search(a);
+	if (i < len && cmp(a, data[i]) == 0) return -1;
+	if (len == 2 * m) return 1;
 	for (int j = len; j > i; j--) data[j] = data[j-1];
 	data[i] = a;
 	len++;
@@ -206,7 +207,9 @@ BNode<T> * BNode<T>::find_child(T a, int * i) {
 
 template <class T>
 int BNode<T>::bin_search(T a, int (cmp)(const T, const T)) {
-	int i = 0, j = len, k = 0;
+	int k = 0;
+	int i = 0;
+	int j = len;
 	if (cmp(a, data[0]) <= 0) return 0;
 	while (i != j && i != j - 1) {
 		k = (i + j) >> 1;
@@ -218,7 +221,9 @@ int BNode<T>::bin_search(T a, int (cmp)(const T, const T)) {
 
 template <class T>
 int BNode<T>::bin_search(Record * a, int (cmp)(const Record *, const T)) {
-	int i = 0, j = len, k = 0;
+	int k = 0;
+	int i = 0;
+	int j = len;
 	if (cmp(a, data[0]) <= 0) return 0;
 	while (i != j && i != j - 1) {
 		k = (i + j) >> 1;
