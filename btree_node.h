@@ -180,7 +180,8 @@ BNode<T> * BNode<T>::cut(T * a, int m, int i, BNode<T> * res) {
 			new_node->child[j-m] = child[j+1];
 		}
 		new_node->data[i-m-1] = *a;
-		new_node->child[i-m] = *res; delete res;
+		new_node->child[i-m] = *res;
+		delete res;
 		for (j = i; j < len; j++) {
 			new_node->data[j-m] = data[j];
 			new_node->child[j-m+1] = child[j+1];
@@ -189,7 +190,8 @@ BNode<T> * BNode<T>::cut(T * a, int m, int i, BNode<T> * res) {
 		*a = data[m];
 		return new_node;
 	}
-	new_node->child[0] = *res; delete res;
+	new_node->child[0] = *res;
+	delete res;
 	for (j = m; j < len; j++) {
 		new_node->data[j-m] = data[j];
 		new_node->child[j-m+1] = child[j+1];

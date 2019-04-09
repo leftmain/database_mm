@@ -194,16 +194,18 @@ void BTree<T>::get_from_right(BNode<T> * r, int i) {
 	auto dest = r->get_child() + i;
 	auto src = r->get_child() + i + 1;
 	int l = dest->get_len();
+	int j = 0;
 	dest->get_data()[l] = r->get_data()[i];
 	r->get_data()[i] = src->get_data()[0];
 	if (dest->get_child()) {
 		dest->get_child()[l+1] = src->get_child()[0];
-		for (int j = 0; j < src->get_len()-1; j++) {
+		for (j = 0; j < src->get_len() - 1; j++) {
 			src->get_data()[j] = src->get_data()[j+1];
 			src->get_child()[j] = src->get_child()[j+1];
 		}
+		src->get_child()[j] = src->get_child()[j+1];
 	} else {
-		for (int j = 0; j < src->get_len()-1; j++)
+		for (j = 0; j < src->get_len() - 1; j++)
 			src->get_data()[j] = src->get_data()[j+1];
 	}
 	(*src)--;
