@@ -6,7 +6,7 @@
 #include "btree.h"
 #include "rbtree.h"
 
-#define BTREE 0
+#define BTREE 1
 #define DEBUG_PRINT 0
 
 template <class T>

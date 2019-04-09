@@ -110,7 +110,7 @@ Node<T> * List<T>::delete_node(Node<T> * n, int flag) {
 	if (n == nullptr) return nullptr;
 	if (n == head) {
 		head = head->get_next();
-		head->set_prev(nullptr);
+		if (head) head->set_prev(nullptr);
 		if (flag & REMOVE) delete n;
 		size--;
 		return head;

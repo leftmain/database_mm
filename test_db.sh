@@ -3,16 +3,15 @@
 n=1000000
 #n=5000000
 
-dir="/Users/admin/Downloads/users_data"
+path="/home/username/"
+datadir="${path}big_files"
 data="\
-a${n}.txt \
-a${n}_sort_g.txt \
-a${n}_sort_n.txt \
-a${n}_sort_v.txt \
+nvg_${n}.txt \
 "
 
+cmddir="${path}Downloads/prog_files"
 commands="\
-commands0.txt \
+commands.txt \
 commands1.txt \
 commands2.txt \
 commands3.txt \
@@ -25,9 +24,15 @@ for data in ${data}
   do \
     for cmd in ${commands}
       do \
-        data_file="${dir}/${data}"
-        cmd_file="${dir}/${cmd}"
+        data_file="${datadir}/${data}"
+        cmd_file="${cmddir}/${cmd}"
         echo "Data=${data_file} Commands=${cmd_file}"
         cat ${cmd_file} | ./a ${data_file} | grep '^ *Student' | wc
+#        cat ${cmd_file} | ./a ${data_file} | grep '^ *Student' | wc >> res.txt
+#        cat ${cmd_file} | ./aa ${data_file} | grep '^ *Student' | wc >> res1.txt
       done
   done
+
+#diff -C0 res.txt res1.txt
+#rm res.txt res1.txt
+
