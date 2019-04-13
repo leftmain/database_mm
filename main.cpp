@@ -9,7 +9,7 @@ int main(int argc, char ** argv) {
 
 	if (argc > 1) file = argv[1];
 
-///*
+/*
 	const char * fcmd = "/home/username/Downloads/prog_files/commands1.txt";
 //	const char * fcmd = "cmd.txt";
 	const char * fres = "res.txt";
@@ -17,12 +17,12 @@ int main(int argc, char ** argv) {
 	if (!fr) { perror("fr\n"); fclose(fp); return 1; }
 	FILE * fw = fopen(fres, "w");
 	if (!fw) { perror("fw\n"); fclose(fp); fclose(fr); return 1; }
+*/
 
 	if (!(fp = fopen(file, "r"))) {
 		fprintf(stderr, "Cannot open file %s\n", file);
 		return 1;
 	}
-//*/
 
 	if ((res = d.read(fp)) != ALL_RIGHT) {
 		switch (res) {
@@ -45,10 +45,10 @@ int main(int argc, char ** argv) {
 /*
 	d.start(fr, fw);
 	d.start(fr, stdout);
-*/
-	d.start();
 	fclose(fr);
 	fclose(fw);
+*/
+	d.start();
 
 	return 0;
 }

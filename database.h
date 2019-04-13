@@ -109,6 +109,7 @@ if (BTREE) {
 	if (rbtree.add(node) == ALL_RIGHT) list.add_node(node);
 	else delete node;
 }
+	return 0;
 }
 
 template <class T>
