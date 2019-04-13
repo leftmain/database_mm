@@ -24,6 +24,7 @@ public:
 	~RBNode();
 
 	void operator=(const RBNode&);
+	void get(const RBNode *);
 	void print(FILE * = stdout);
 
 	void set_right(RBNode * r) { right = r; }
@@ -58,8 +59,17 @@ RBNode<T>::~RBNode() {
 
 template <class T>
 void RBNode<T>::operator=(const RBNode& a) {
+/*
 	if (&a == nullptr) data = nullptr;
 	else data = a.get_data();
+*/
+	data = a.get_data();
+}
+
+template <class T>
+void RBNode<T>::get(const RBNode * a) {
+	if (a == nullptr) data = nullptr;
+	else data = a->get_data();
 }
 
 template <class T>

@@ -95,9 +95,15 @@ if (DEBUG_RB) print();
 template <class T>
 void RBTree<T>::rotate_right(RBNode<T> * a) {
 	auto b = a->get_left();
+	RBNode<T> tmp;
+	tmp.get(a);
+	a->get(b);
+	b->get(&tmp);
+/*
 	auto tmp = *a;
 	*a = *b;
 	*b = tmp;
+*/
 	auto tmp2 = b->get_right();
 	b->set_right(a->get_right());
 	a->set_right(b);
@@ -108,9 +114,15 @@ void RBTree<T>::rotate_right(RBNode<T> * a) {
 template <class T>
 void RBTree<T>::rotate_left(RBNode<T> * a) {
 	auto b = a->get_right();
+	RBNode<T> tmp;
+	tmp.get(a);
+	a->get(b);
+	b->get(&tmp);
+/*
 	auto tmp = *a;
 	*a = *b;
 	*b = tmp;
+*/
 	auto tmp2 = b->get_left();
 	b->set_left(a->get_left());
 	a->set_left(b);
@@ -131,6 +143,7 @@ bool RBTree<T>::balance_d(RBNode<T> * r, RBNode<T> * a, RBNode<T> * b) {
 			b = r->get_right();
 			a = r->get_left();
 		}
+		if (b == nullptr) return false;
 if (DEBUG_RB) {
 printf("-_____________0\n");
 print();
@@ -157,6 +170,7 @@ printf("-_____________1\n");
 			a = r->get_right();
 			b = r->get_left();
 		}
+		if (b == nullptr) return false;
 if (DEBUG_RB) {
 printf("-_____________0\n");
 print();
@@ -212,7 +226,8 @@ printf("0_____________1\n");
 					tmp = delete_element(a, r->get_right(), true);
 					if (tmp == r->get_right()) {
 						r->set_right(tmp->get_right());
-						*r = *tmp;
+//						*r = *tmp;
+						r->get(tmp);
 						if (tmp->is_black()) {
 							need_balance = \
 								balance_d(r, r->get_right(), r->get_left());
@@ -223,7 +238,10 @@ print();
 printf("1_____________1\n");
 }
 						}
-					} else *r = *tmp;
+					} else {
+//						*r = *tmp;
+						r->get(tmp);
+					}
 					delete tmp;
 				} else {
 					if (r->is_red()) {
