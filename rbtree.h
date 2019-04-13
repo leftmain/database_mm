@@ -136,6 +136,7 @@ bool RBTree<T>::balance_d(RBNode<T> * r, RBNode<T> * a, RBNode<T> * b) {
 		r->set_color(BLACK);
 		return false;
 	}
+	if (b == nullptr) return false;
 	if (b == r->get_right()) {
 		if (b->is_red()) {
 			rotate_left(r);

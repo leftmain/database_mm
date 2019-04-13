@@ -10,8 +10,8 @@ int main(int argc, char ** argv) {
 	if (argc > 1) file = argv[1];
 
 /*
-//	const char * fcmd = "/home/username/Downloads/prog_files/commands1.txt";
-	const char * fcmd = "cmd4.txt";
+	const char * fcmd = "/Users/admin/Downloads/users_data/commands4.txt";
+//	const char * fcmd = "cmd4.txt";
 	const char * fres = "res.txt";
 	FILE * fr = fopen(fcmd, "r");
 	if (!fr) { perror("fr\n"); fclose(fp); return 1; }
@@ -47,7 +47,6 @@ int main(int argc, char ** argv) {
 	d.start(fr, stdout);
 	fclose(fr);
 	fclose(fw);
-	d.start(fr, stdout);
 */
 	d.start();
 

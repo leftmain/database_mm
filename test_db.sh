@@ -1,7 +1,7 @@
 #!/bin/bash
 
-n=1000000
-#n=5000000
+#n=1000000
+n=5000000
 
 dir="/Users/admin/Downloads/users_data"
 data="\
