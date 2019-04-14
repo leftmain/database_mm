@@ -171,7 +171,6 @@ void List<T>::delete_(Command& cmd) {
 	auto tmp = head;
 	while (tmp) {
 		if (cmd.check(*tmp)) {
-			auto c = tmp;
 			if (stack->push(tmp)) {
 				perror("memory error in stack\n");
 				return;

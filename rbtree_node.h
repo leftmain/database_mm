@@ -51,10 +51,10 @@ RBNode<T>::RBNode(T d, color c) {
 
 template <class T>
 RBNode<T>::~RBNode() {
-	RBNode * right = nullptr;
-	RBNode * left = nullptr;
-	T data = nullptr;
-	bool red = true;
+	right = nullptr;
+	left = nullptr;
+	data = nullptr;
+	red = true;
 }
 
 template <class T>
@@ -98,7 +98,13 @@ int cmp_npg(const T a, const T b) {
 
 template <class T>
 int cmp_n(const T a, const Record * b) {
-	return strcmp(a->get_name(), b->get_name());
+	if (b == nullptr) return 1;
+	if (a->get_name() && b->get_name()) {
+		return strcmp(a->get_name(), b->get_name());
+	}
+	if (!a->get_name() && b->get_name()) return -1;
+	if (a->get_name() && !b->get_name()) return 1;
+	return 0;
 }
 
 #endif

@@ -86,7 +86,7 @@ public:
 	void clear();
 	int check(const Record&);
 
-	Record * get_record(void) const { return (Record *)this; }
+	Record * get_record(void) { return (Record *)this; }
 	cmd_type get_type(void) const { return type; }
 	cond_type get_c_name(void) const { return c_name; }
 	cond_type get_c_phone(void) const { return c_phone; }

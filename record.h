@@ -28,7 +28,7 @@ public:
 	void swap(Record&);
 	void move(Record&);
 
-	char * get_name() const { return name.get(); }
+	char * get_name() const { return name ? name.get() : nullptr; }
 	int get_phone() const { return phone; }
 	int get_group() const { return group; }
 

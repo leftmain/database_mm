@@ -454,7 +454,7 @@ printf("___\n");
 print();
 printf("===\n");
 }
-		delete_element(stack->get_curr()->get_data(), root);
+		root = delete_element(stack->get_curr()->get_data(), root);
 if (DEBUG_RB) {
 print();
 printf("---\n");

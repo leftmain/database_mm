@@ -11,15 +11,15 @@ H = header.h \
 	rbtree_node.h \
 	rbtree.h \
 	database.h
-all: a
+all: a.out
 
-a: main.o $H makefile
-	g++ main.o -o a
-main.o: main.cpp $H
+a.out: main.o $H makefile
+	g++ main.o -o a.out
+main.o: main.cpp $H makefile
 	g++ $F -c main.cpp
 
 clean:
-	rm *.o a
+	rm *.o a.out
 clear:
-	rm *.o a
+	rm *.o a.out
 
