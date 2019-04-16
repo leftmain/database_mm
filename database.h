@@ -24,7 +24,7 @@ private:
 	void select(Command&, FILE * = stdout);
 
 public:
-	Database() : list(&stack), btree(2, &stack), rbtree(&stack) {}
+	Database() : list(&stack), btree(5, &stack), rbtree(&stack) {}
 	~Database() {}
 
 	int read(FILE *);

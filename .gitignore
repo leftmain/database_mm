@@ -4,5 +4,6 @@
 leak.out
 *.txt
 a
+a.out
 r
 *.sh
