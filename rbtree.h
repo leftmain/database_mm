@@ -6,7 +6,6 @@
 #include "command.h"
 
 #define MAX_RB_LEVEL 3
-#define DEBUG_RB 0
 
 template <class T>
 class RBTree
@@ -28,36 +27,7 @@ private:
 
 public:
 	RBTree(Stack<T> * st) { stack = st; }
-	~RBTree() {
-fprintf(stderr, "rb destr bregin\n");
-//		delete_tree(root);
-		RBNode<T> * m[100];
-		m[0] = root;
-		int l = 1;
-		int k = 0;
-		while (l > 0) {
-			if (l == 99) {
-				fprintf(stderr, "max deep 100\n");
-				break;
-			}
-			if (m[l-1]->get_right()) {
-				m[l] = m[l-1]->get_right();
-				m[l-1]->set_right(nullptr);
-				l++;
-			} else if (m[l-1]->get_left()) {
-				m[l] = m[l-1]->get_left();
-				m[l-1]->set_left(nullptr);
-				l++;
-			} else {
-				delete m[l-1];
-				l--;
-k++;
-if (k % 100000 == 0)
-	fprintf(stderr, "# k = %d\n", k);
-			}
-		}
-fprintf(stderr, "rb destr end\n");
-	}
+	~RBTree();
 
 	int add(T, RBNode<T> * = nullptr);
 	void print(FILE * = stdout, RBNode<T> * = nullptr, int = 0);
@@ -71,26 +41,58 @@ fprintf(stderr, "rb destr end\n");
 };
 
 template <class T>
+RBTree<T>::~RBTree() {
+	fprintf(stderr, "rb-tree destr ");
+	double t = clock();
+	delete_tree(root);
+/*
+	RBNode<T> * m[100];
+	m[0] = root;
+	int l = 1;
+	int k = 0;
+	while (l > 0) {
+		if (l == 99) {
+			fprintf(stderr, "max deep 100\n");
+			break;
+		}
+		if (m[l-1]->get_right()) {
+			m[l] = m[l-1]->get_right();
+			m[l-1]->set_right(nullptr);
+			l++;
+		} else if (m[l-1]->get_left()) {
+			m[l] = m[l-1]->get_left();
+			m[l-1]->set_left(nullptr);
+			l++;
+		} else {
+			delete m[l-1];
+			l--;
+			k++;
+			if (k % 100000 == 0)
+			fprintf(stderr, "# k = %d\n", k);
+		}
+	}
+*/
+	t = (clock() - t) / CLOCKS_PER_SEC;
+	fprintf(stderr, "[%.2lf]\n", t);
+}
+
+template <class T>
 void RBTree<T>::delete_tree(RBNode<T> * r) {
-static int k = 0;
 	if (r == nullptr) return;
 	if (r->get_right()) delete_tree(r->get_right());
 	if (r->get_left()) delete_tree(r->get_left());
 	delete r;
+/*
+static int k = 0;
+k++;
+if (k % 100000 == 0)
+	fprintf(stderr, "# k = %d\n", k);
+*/
 }
 
 /** a - new child, b - old */
 template <class T>
 int RBTree<T>::balance(RBNode<T> * r, RBNode<T> * a, RBNode<T> * b) {
-if (DEBUG_RB) {
-printf("balance\n");
-printf("r = ");r->print();
-printf("a = ");a->print();
-printf("b = ");if (b) b->print(); else printf("null\n");
-print();
-printf("-----\n");
-}
-
 	if (a->is_red()) {
 		if (r->is_red()) return -1;
 		if (b && b->is_red()) {
@@ -118,7 +120,6 @@ printf("-----\n");
 		r->set_color(BLACK);
 		return ALL_RIGHT;
 	}
-if (DEBUG_RB) print();
 	return ALL_RIGHT;
 }
 
@@ -175,11 +176,6 @@ bool RBTree<T>::balance_d(RBNode<T> * r, RBNode<T> * a, RBNode<T> * b) {
 			a = r->get_left();
 		}
 		if (b == nullptr) return false;
-if (DEBUG_RB) {
-printf("-_____________0\n");
-print();
-printf("-_____________1\n");
-}
 		if (b->black_right() && b->black_left()) {
 			b->set_color(RED);
 			color c = r->get_color();
@@ -202,11 +198,6 @@ printf("-_____________1\n");
 			b = r->get_left();
 		}
 		if (b == nullptr) return false;
-if (DEBUG_RB) {
-printf("-_____________0\n");
-print();
-printf("-_____________1\n");
-}
 		if (b->black_right() && b->black_left()) {
 			b->set_color(RED);
 			color c = r->get_color();
@@ -238,12 +229,6 @@ RBNode<T> * RBTree<T>::delete_element(T a, RBNode<T> * r, bool found) {
 				r->set_left(tmp->get_right());
 				if (tmp->is_black()) {
 					need_balance = balance_d(r, r->get_left(), r->get_right());
-if (DEBUG_RB) {
-r->get_data()->print();
-printf("0_____________0\n");
-print();
-printf("0_____________1\n");
-}
 				}
 			}
 			return tmp;
@@ -262,12 +247,6 @@ printf("0_____________1\n");
 						if (tmp->is_black()) {
 							need_balance = \
 								balance_d(r, r->get_right(), r->get_left());
-if (DEBUG_RB) {
-r->get_data()->print();
-printf("1_____________0\n");
-print();
-printf("1_____________1\n");
-}
 						}
 					} else {
 //						*r = *tmp;
@@ -307,12 +286,6 @@ printf("1_____________1\n");
 				r->set_right(delete_element(a, r->get_right()));
 				if (need_balance) {
 					need_balance = balance_d(r, r->get_right(), r->get_left());
-if (DEBUG_RB) {
-r->get_data()->print();
-printf("2_____________0\n");
-print();
-printf("2_____________1\n");
-}
 				}
 			}
 		} else {
@@ -320,12 +293,6 @@ printf("2_____________1\n");
 				r->set_left(delete_element(a, r->get_left()));
 				if (need_balance) {
 					need_balance = balance_d(r, r->get_left(), r->get_right());
-if (DEBUG_RB) {
-r->get_data()->print();
-printf("3_____________0\n");
-print();
-printf("3_____________1\n");
-}
 				}
 			}
 		}
@@ -425,14 +392,6 @@ int RBTree<T>::add(T a, RBNode<T> * r) {
 		return ALL_RIGHT;
 	}
 
-if (DEBUG_RB) {
-printf("--\n: ");
-r->print();
-a->print();
-print();
-printf("--\n");
-}
-
 	res = cmp_npg(a, r->get_data());
 	if (res > 0) {
 		if (r->get_right()) {
@@ -478,17 +437,7 @@ template <class T>
 void RBTree<T>::delete_from_stack() {
 	stack->goto_top();
 	while (stack->get_curr()) {
-if (DEBUG_RB) {
-stack->get_curr()->get_data()->print();
-printf("___\n");
-print();
-printf("===\n");
-}
 		root = delete_element(stack->get_curr()->get_data(), root);
-if (DEBUG_RB) {
-print();
-printf("---\n");
-}
 		stack->goto_next();
 	}
 	stack->goto_top();

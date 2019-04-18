@@ -5,7 +5,7 @@
 #include "stack.h"
 #include "command.h"
 
-#define MAX_LEVEL 3
+#define MAX_LEVEL 2
 
 template <class T>
 class BTree
@@ -52,9 +52,7 @@ public:
 
 template <class T>
 void BTree<T>::delete_tree(BNode<T> * r) {
-//printf("#\n");
 	if (r == nullptr) return;
-//r->print();
 	if (r->get_child()) {
 		for (int i = 0; i <= r->get_len(); i++) {
 			delete_tree(r->get_child() + i);
@@ -72,14 +70,16 @@ BTree<T>::BTree(int mm, Stack<T> * st) {
 
 template <class T>
 BTree<T>::~BTree() {
-fprintf(stderr, "b destr bregin\n");
+	fprintf(stderr, "b-tree destr ");
+	double t = clock();
 	if (root) {
 		delete_tree(root);
 		delete root;
 	}
 	root = nullptr;
 	curr = nullptr;
-fprintf(stderr, "b destr end\n");
+	t = (clock() - t) / CLOCKS_PER_SEC;
+	fprintf(stderr, "[%.2lf]\n", t);
 }
 
 template <class T>

@@ -8,7 +8,7 @@
 
 #define BTREE 1
 #define RBTREE 1
-#define DEBUG_PRINT 1
+#define DEBUG_PRINT 0
 
 template <class T>
 class Database
@@ -38,6 +38,8 @@ int Database<T>::read(FILE * fp) {
 	T c;
 	int res = 0;
 	Node<T> * node = nullptr;
+	fprintf(stderr, "reading ");
+	double t = clock();
 	while ((res = c.read(fp)) == ALL_RIGHT) {
 		if ((node = list.add(c)) == nullptr) return MEM_ERR;
 		if (RBTREE) {
@@ -49,6 +51,8 @@ int Database<T>::read(FILE * fp) {
 			if ((res = btree.add(node))) return MEM_ERR;
 	}
 	if (res == MEM_ERR || !feof(fp)) return res;
+	t = (clock() - t) / CLOCKS_PER_SEC;
+	fprintf(stderr, "[%.2lf]\n", t);
 	return ALL_RIGHT;
 }
 
@@ -76,28 +80,28 @@ void Database<T>::start(FILE * in, FILE * out) {
 	char buf[LEN];
 	double t = 0.;
 	int res = 0;
-if (DEBUG_PRINT) {
-	list.print();
-	if (BTREE) btree.print();
-	if (RBTREE) rbtree.print();
-}
+	if (DEBUG_PRINT) {
+		list.print();
+		if (BTREE) btree.print();
+		if (RBTREE) rbtree.print();
+	}
 	while (fgets(buf, LEN, in)) {
 		res = c.parse(buf);
-if (DEBUG_PRINT) {
-	fprintf(stderr, "# ");
-	c.print();
-}
+		if (DEBUG_PRINT) {
+			fprintf(stderr, "# ");
+			c.print();
+		}
 		if (res) apply_command(c, out);
 		else if (c.get_type() == QUIT) break;
-if (DEBUG_PRINT) {
-	list.print();
-	if (BTREE) btree.print();
-	if (RBTREE) rbtree.print();
-}
+		if (DEBUG_PRINT) {
+			list.print();
+			if (BTREE) btree.print();
+			if (RBTREE) rbtree.print();
+		}
 		c.clear();
 	}
 	t = (clock() - t) / CLOCKS_PER_SEC;
-	fprintf(stderr, "Time: %.2lf\n", t);
+	fprintf(stderr, "commands [%.2lf]\n", t);
 }
 
 template <class T>
