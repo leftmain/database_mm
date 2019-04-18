@@ -22,7 +22,7 @@ main.o: main.cpp $H $M
 	$C $F -c main.cpp
 
 clean:
-	rm *.o a.out
+	rm *.o *.out
 clear:
-	rm *.o a.out
+	rm *.o *.out
 
