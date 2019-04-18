@@ -52,7 +52,9 @@ public:
 
 template <class T>
 void BTree<T>::delete_tree(BNode<T> * r) {
+//printf("#\n");
 	if (r == nullptr) return;
+//r->print();
 	if (r->get_child()) {
 		for (int i = 0; i <= r->get_len(); i++) {
 			delete_tree(r->get_child() + i);
@@ -70,12 +72,14 @@ BTree<T>::BTree(int mm, Stack<T> * st) {
 
 template <class T>
 BTree<T>::~BTree() {
+fprintf(stderr, "b destr bregin\n");
 	if (root) {
 		delete_tree(root);
 		delete root;
 	}
 	root = nullptr;
 	curr = nullptr;
+fprintf(stderr, "b destr end\n");
 }
 
 template <class T>

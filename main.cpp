@@ -9,16 +9,16 @@ int main(int argc, char ** argv) {
 
 	if (argc > 1) file = argv[1];
 
-/*
-//	const char * fcmd = "/Users/admin/Downloads/users_data/commands4.txt";
+///*
+	const char * fcmd = "/Users/admin/Downloads/users_data/commands0.txt";
 //	const char * fcmd = "cmd4.txt";
-	const char * fcmd = "/Users/admin/Downloads/users_data/commands.txt";
+//	const char * fcmd = "/users/data/commands0.txt";
 	const char * fres = "res.txt";
 	FILE * fr = fopen(fcmd, "r");
 	if (!fr) { perror("fr\n"); fclose(fp); return 1; }
 	FILE * fw = fopen(fres, "w");
 	if (!fw) { perror("fw\n"); fclose(fp); fclose(fr); return 1; }
-*/
+//*/
 
 	if (!(fp = fopen(file, "r"))) {
 		fprintf(stderr, "Cannot open file %s\n", file);
@@ -44,12 +44,12 @@ int main(int argc, char ** argv) {
 	fclose(fp);
 	
 /*
-	d.start(fr, stdout);
 	d.start(fr, fw);
+	d.start();
+*/
+	d.start(fr, stdout);
 	fclose(fr);
 	fclose(fw);
-*/
-	d.start();
 
 	return 0;
 }

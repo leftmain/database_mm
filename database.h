@@ -143,8 +143,8 @@ void Database<T>::delete_(Command& cmd) {
 		list.delete_from_stack();
 	} else {
 		list.delete_(cmd);
-		btree.delete_from_stack();
-		rbtree.delete_from_stack();
+		if (BTREE) btree.delete_from_stack();
+		if (RBTREE) rbtree.delete_from_stack();
 	}
 	stack.delete_stack();
 }

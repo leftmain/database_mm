@@ -28,7 +28,36 @@ private:
 
 public:
 	RBTree(Stack<T> * st) { stack = st; }
-	~RBTree() { delete_tree(root); }
+	~RBTree() {
+fprintf(stderr, "rb destr bregin\n");
+//		delete_tree(root);
+		RBNode<T> * m[100];
+		m[0] = root;
+		int l = 1;
+		int k = 0;
+		while (l > 0) {
+			if (l == 99) {
+				fprintf(stderr, "max deep 100\n");
+				break;
+			}
+			if (m[l-1]->get_right()) {
+				m[l] = m[l-1]->get_right();
+				m[l-1]->set_right(nullptr);
+				l++;
+			} else if (m[l-1]->get_left()) {
+				m[l] = m[l-1]->get_left();
+				m[l-1]->set_left(nullptr);
+				l++;
+			} else {
+				delete m[l-1];
+				l--;
+k++;
+if (k % 100000 == 0)
+	fprintf(stderr, "# k = %d\n", k);
+			}
+		}
+fprintf(stderr, "rb destr end\n");
+	}
 
 	int add(T, RBNode<T> * = nullptr);
 	void print(FILE * = stdout, RBNode<T> * = nullptr, int = 0);
@@ -43,6 +72,7 @@ public:
 
 template <class T>
 void RBTree<T>::delete_tree(RBNode<T> * r) {
+static int k = 0;
 	if (r == nullptr) return;
 	if (r->get_right()) delete_tree(r->get_right());
 	if (r->get_left()) delete_tree(r->get_left());
