@@ -28,6 +28,6 @@ for data in ${data}
         data_file="${dir}/${data}"
         cmd_file="${dir}/${cmd}"
         echo "Data=${data_file} Commands=${cmd_file}"
-        cat ${cmd_file} | ./a ${data_file} | grep '^ *Student' | wc
+        cat ${cmd_file} | ./a.out ${data_file} | grep '^ *Student' | wc
       done
   done
