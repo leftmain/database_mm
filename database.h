@@ -8,7 +8,7 @@
 
 #define BTREE 1
 #define RBTREE 1
-#define DEBUG_PRINT 0
+#define DEBUG_PRINT 1
 
 template <class T>
 class Database
