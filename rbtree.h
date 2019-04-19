@@ -6,6 +6,7 @@
 #include "command.h"
 
 #define MAX_RB_LEVEL 3
+//#define RB_DESTR_TIME
 
 template <class T>
 class RBTree
@@ -26,12 +27,13 @@ private:
 	void search(Command&, RBNode<T> *, int, FILE * = stdout);
 
 public:
-	RBTree(Stack<T> * st) { stack = st; }
+	RBTree(Stack<T> * st = nullptr) { stack = st; }
 	~RBTree();
 
+	void init_stack(Stack<T> *);
 	int add(T, RBNode<T> * = nullptr);
 	void print(FILE * = stdout, RBNode<T> * = nullptr, int = 0);
-	void delete_from_stack();
+	void delete_from_stack(int = -1);
 	void delete_(Command&);
 	void select(Command&, FILE * = stdout);
 
@@ -42,8 +44,10 @@ public:
 
 template <class T>
 RBTree<T>::~RBTree() {
+#ifdef RB_DESTR_TIME
 	fprintf(stderr, "rb-tree destr ");
 	double t = clock();
+#endif
 	delete_tree(root);
 /*
 	RBNode<T> * m[100];
@@ -72,8 +76,15 @@ RBTree<T>::~RBTree() {
 		}
 	}
 */
+#ifdef RB_DESTR_TIME
 	t = (clock() - t) / CLOCKS_PER_SEC;
 	fprintf(stderr, "[%.2lf]\n", t);
+#endif
+}
+
+template <class T>
+void RBTree<T>::init_stack(Stack<T> * s) {
+	stack = s;
 }
 
 template <class T>
@@ -222,6 +233,7 @@ RBNode<T> * RBTree<T>::delete_element(T a, RBNode<T> * r, bool found) {
 	int res = 0;
 	auto tmp = r;
 	static bool need_balance = false;
+	if (r == nullptr) return nullptr;
 	if (found) {
 		if (r->get_left()) {
 			tmp = delete_element(a, r->get_left(), found);
@@ -427,17 +439,20 @@ void RBTree<T>::print(FILE * fp, RBNode<T> * r, int level) {
 	if (r == nullptr) r = root;
 	if (r == nullptr) return;
 	if (level > MAX_RB_LEVEL) return;
+	if (level == 0) fprintf(fp, "RBTree\n");
 	if (r->get_right()) print(fp, r->get_right(), level + 1);
 	for (int i = 0; i < level; i++) fprintf(fp, "    ");
 	r->print(fp);
 	if (r->get_left()) print(fp, r->get_left(), level + 1);
+	if (level == 0) fprintf(fp, "_ _ _ _ _ _ _ _ _ _\n\n");
 }
 
 template <class T>
-void RBTree<T>::delete_from_stack() {
+void RBTree<T>::delete_from_stack(int g) {
 	stack->goto_top();
 	while (stack->get_curr()) {
-		root = delete_element(stack->get_curr()->get_data(), root);
+		if (g == -1 || stack->get_curr()->get_data()->get_group() == g)
+			root = delete_element(stack->get_curr()->get_data(), root);
 		stack->goto_next();
 	}
 	stack->goto_top();

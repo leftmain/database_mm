@@ -13,6 +13,7 @@
 #define CANNOT_READ	2
 #define MEM_ERR    	3
 #define EQUAL      	4
+#define DATA_ERR   	5
 
 #endif
 

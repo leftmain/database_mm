@@ -212,6 +212,7 @@ int BNode<T>::bin_search(T a, int (cmp)(const T, const T)) {
 	int k = 0;
 	int i = 0;
 	int j = len;
+	if (len == 0) return 0;
 	if (cmp(a, data[0]) <= 0) return 0;
 	while (i != j && i != j - 1) {
 		k = (i + j) >> 1;
@@ -244,8 +245,9 @@ void BNode<T>::clear() {
 
 template <class T>
 void BNode<T>::print(FILE * fp) {
+	if (data == nullptr) return;
 	for (int i = 0; i < MAX_NODE_PRINT && i < len; i++)
-		data[i]->draw(fp);
+		if (data[i]) data[i]->draw(fp);
 	fprintf(fp, "\n");
 }
 

@@ -6,6 +6,7 @@
 #include "command.h"
 
 #define MAX_LEVEL 2
+//#define B_DESTR_TIME
 
 template <class T>
 class BTree
@@ -30,9 +31,10 @@ private:
 
 
 public:
-	BTree(int, Stack<T> *);
+	BTree(int, Stack<T> * = nullptr);
 	~BTree();
 
+	void init_stack(Stack<T> *);
 	int add(T);
 	int read(const char *, int);
 	void print(FILE * = stderr, BNode<T> * = nullptr, int = 0);
@@ -45,7 +47,7 @@ public:
 
 	void select(Command&, FILE * = stdout);
 	void delete_(Command&);
-	void delete_from_stack();
+	void delete_from_stack(int = -1);
 	void search(Command&, BNode<T> *, int, FILE * = stdout);
 
 };
@@ -70,16 +72,25 @@ BTree<T>::BTree(int mm, Stack<T> * st) {
 
 template <class T>
 BTree<T>::~BTree() {
+#ifdef B_DESTR_TIME
 	fprintf(stderr, "b-tree destr ");
 	double t = clock();
+#endif
 	if (root) {
 		delete_tree(root);
 		delete root;
 	}
 	root = nullptr;
 	curr = nullptr;
+#ifdef B_DESTR_TIME
 	t = (clock() - t) / CLOCKS_PER_SEC;
 	fprintf(stderr, "[%.2lf]\n", t);
+#endif
+}
+
+template <class T>
+void BTree<T>::init_stack(Stack<T> * s) {
+	stack = s;
 }
 
 template <class T>
@@ -135,7 +146,8 @@ BNode<T> * BTree<T>::add(T * a, BNode<T> * r) {
 	} else {
 		if (r->get_child()) {
 			auto res = r->find_child(*a, &i);
-			if (i < r->get_len() && cmp(*a, r->get_data()[i]) == 0) {
+			if (i < r->get_len() &&
+			cmp(*a, r->get_data()[i]) == 0) {
 				equal_flag = true;
 				return root;
 			}
@@ -162,12 +174,14 @@ void BTree<T>::print(FILE * fp, BNode<T> * r, int level) {
 	if (r == nullptr) r = root;
 	if (r == nullptr) return;
 	if (level > MAX_LEVEL) return;
+	if (level == 0) fprintf(fp, "BTree\n");
 	for (i = 0; i < level; i++) fprintf(fp, "    ");
 	r->print();
 	if (r->get_child()) {
 		for (i = 0; i <= r->get_len(); i++)
 			print(fp, r->get_child() + i, level + 1);
 	}
+	if (level == 0) fprintf(fp, "_ _ _ _ _ _ _ _ _ _\n\n");
 }
 
 template <class T>
@@ -255,7 +269,8 @@ void BTree<T>::balance(BNode<T> * r, int i) {
 	if (child->get_len() < m) {
 		if (i > 0 && r->get_child()[i-1].get_len() > m) {
 			get_from_left(r, i);
-		} else if (i < r->get_len() && r->get_child()[i+1].get_len() > m) {
+		} else if (i < r->get_len() &&
+		r->get_child()[i+1].get_len() > m) {
 			get_from_right(r, i);
 		} else {
 			if (i > 0) merge(r, i-1);
@@ -299,10 +314,19 @@ T BTree<T>::delete_element(T a, BNode<T> * r, bool found) {
 }
 
 template <class T>
-void BTree<T>::delete_from_stack() {
+void BTree<T>::delete_from_stack(int g) {
 	stack->goto_top();
 	while (stack->get_curr()) {
-		delete_element(stack->get_curr()->get_data(), root);
+		auto c = stack->get_curr()->get_data();
+		if (g == -1 || c->get_group() == g)
+			delete_element(c, root);
+		if (root && root->get_len() == 0) {
+			if (root->get_child())
+				delete [] root->get_child();
+			if (root->get_data()) delete [] root->get_data();
+			delete root;
+			root = nullptr;
+		}
 		stack->goto_next();
 	}
 	stack->goto_top();

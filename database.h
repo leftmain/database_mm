@@ -2,9 +2,7 @@
 #define DATABASE_H
 
 #include "header.h"
-#include "list.h"
-#include "btree.h"
-#include "rbtree.h"
+#include "group.h"
 
 #define BTREE 1
 #define RBTREE 1
@@ -14,17 +12,24 @@ template <class T>
 class Database
 {
 private:
-	List<T> list;
+	static const int min_group = 100;
+	static const int max_group = 600;
+
+	Group<T> groups[max_group - min_group];
 	BTree<Node<T> *> btree;
 	RBTree<Node<T> *> rbtree;
 	Stack<Node<T> *> stack;
 
+	void init_stack();
+	int group_hash(T&);
+
 	int insert(T&);
 	void delete_(Command&);
 	void select(Command&, FILE * = stdout);
+	void rm_group_from_stack();
 
 public:
-	Database() : list(&stack), btree(5, &stack), rbtree(&stack) {}
+	Database() : btree(5) { init_stack(); }
 	~Database() {}
 
 	int read(FILE *);
@@ -34,14 +39,33 @@ public:
 };
 
 template <class T>
+void Database<T>::init_stack() {
+	for (int i = 0; i < max_group - min_group; i++)
+		groups[i].init_stack(&stack);
+	btree.init_stack(&stack);
+	rbtree.init_stack(&stack);
+}
+
+template <class T>
+int Database<T>::group_hash(T& a) {
+	int g = a.get_group();
+	if (g < min_group || g > max_group) {
+		fprintf(stderr, "group %d???\n", g);
+		return -1;
+	}
+	return g - min_group;
+}
+
+template <class T>
 int Database<T>::read(FILE * fp) {
-	T c;
+	T e;
 	int res = 0;
 	Node<T> * node = nullptr;
 	fprintf(stderr, "reading ");
 	double t = clock();
-	while ((res = c.read(fp)) == ALL_RIGHT) {
-		if ((node = list.add(c)) == nullptr) return MEM_ERR;
+	while ((res = e.read(fp)) == ALL_RIGHT) {
+		if ((res = group_hash(e)) < 0) return DATA_ERR;
+		if ((node = groups[res].add(e)) == nullptr) continue;
 		if (RBTREE) {
 			res = rbtree.add(node);
 			if (res == MEM_ERR) return MEM_ERR;
@@ -78,23 +102,29 @@ template <class T>
 void Database<T>::start(FILE * in, FILE * out) {
 	Command c;
 	char buf[LEN];
-	double t = 0.;
+	double t = clock();
 	int res = 0;
 	if (DEBUG_PRINT) {
-		list.print();
+		for (int i = 0; i < max_group - min_group; i++)
+			groups[i].print(i + min_group);
 		if (BTREE) btree.print();
 		if (RBTREE) rbtree.print();
 	}
 	while (fgets(buf, LEN, in)) {
+//getchar();
 		res = c.parse(buf);
 		if (DEBUG_PRINT) {
+//printf("-----------------------------------------------------------\
+----------------------------------------------------------------\n");
 			fprintf(stderr, "# ");
 			c.print();
 		}
+//getchar();
 		if (res) apply_command(c, out);
 		else if (c.get_type() == QUIT) break;
 		if (DEBUG_PRINT) {
-			list.print();
+			for (int i = 0; i < max_group - min_group; i++)
+				groups[i].print(i + min_group);
 			if (BTREE) btree.print();
 			if (RBTREE) rbtree.print();
 		}
@@ -106,47 +136,95 @@ void Database<T>::start(FILE * in, FILE * out) {
 
 template <class T>
 int Database<T>::insert(T& a) {
-	Node<T> * node = new Node<T>(a);
-	int res = 0;
+	Node<T> * node = nullptr;
+	int res = group_hash(a);
+
+	if (res < 0) return DATA_ERR;
+	node = groups[res].insert(a);
+	if (node == nullptr) return ALL_RIGHT;
+
+	res = 0;
 	if (BTREE) {
 		if (res == 0) res = btree.add(node);
 		else {
+			fprintf(stderr, "imp_err_1\n");
 			delete node;
-			return 0;
+			return EQUAL;
 		}
 	}
 	if (RBTREE) {
 		if (res == 0) res = rbtree.add(node);
 		else {
+			fprintf(stderr, "imp_err_2\n");
 			delete node;
-			return 0;
+			return EQUAL;
 		}
 	}
-	if (res == 0) list.add_node(node);
-	else delete node;
 
-	return 0;
+	return ALL_RIGHT;
 }
 
 template <class T>
 void Database<T>::delete_(Command& cmd) {
-	if (BTREE && cmd.get_c_phone() != COND_NONE &&
-			cmd.get_c_phone() != NE &&
-			cmd.get_oper() != OR &&
-			cmd.get_oper1() != OR) {
+	int g = 0;
+	if (cmd.get_c_group() != COND_NONE
+			&& cmd.get_c_group() != NE
+			&& cmd.get_oper() != OR
+			&& cmd.get_oper1() != OR
+			&& (g = group_hash(cmd)) > 0) {
+if (DEBUG_PRINT) printf("### delete from groups\n");
+		switch (cmd.get_c_group()) {
+			case EQ:
+				groups[g].delete_(cmd);
+				break;
+			case GT:
+				for (int i = g + 1; i < max_group - min_group; i++)
+					groups[i].delete_(cmd);
+				break;
+			case GE:
+				for (int i = g; i < max_group - min_group; i++)
+					groups[i].delete_(cmd);
+				break;
+			case LT:
+				for (int i = g - 1; i >= 0; i--)
+					groups[i].delete_(cmd);
+				break;
+			case LE:
+				for (int i = g; i >= 0; i--)
+					groups[i].delete_(cmd);
+				break;
+			default:
+				fprintf(stderr, "imp_err_3\n");
+				break;
+		}
+		if (BTREE) btree.delete_from_stack();
+		if (RBTREE) rbtree.delete_from_stack();
+	} else if (BTREE
+			&& cmd.get_c_phone() != COND_NONE
+			&& cmd.get_c_phone() != NE
+			&& cmd.get_c_name() != LIKE
+			&& cmd.get_oper() != OR
+			&& cmd.get_oper1() != OR) {
+if (DEBUG_PRINT) printf("### delete from btree\n");
 		btree.delete_(cmd);
 		if (RBTREE) rbtree.delete_from_stack();
-		list.delete_from_stack();
-	} else if (RBTREE && cmd.get_c_name() != COND_NONE &&
-				cmd.get_c_name() != NE &&
-				cmd.get_c_name() != LIKE &&
-				cmd.get_oper() != OR &&
-				cmd.get_oper1() != OR) {
+		for (int i = 0; i < max_group - min_group; i++)
+			groups[i].delete_from_stack(i + min_group);
+	} else if (RBTREE
+			&& cmd.get_c_name() != COND_NONE
+			&& cmd.get_c_name() != NE
+			&& cmd.get_c_name() != LIKE
+			&& cmd.get_oper() != OR
+			&& cmd.get_oper1() != OR) {
+if (DEBUG_PRINT) printf("### delete from rbtree\n");
 		rbtree.delete_(cmd);
 		if (BTREE) btree.delete_from_stack();
-		list.delete_from_stack();
+		for (int i = 0; i < max_group - min_group; i++)
+			groups[i].delete_from_stack(i + min_group);
 	} else {
-		list.delete_(cmd);
+if (DEBUG_PRINT) printf("### delete from all groups\n");
+		for (int i = 0; i < max_group - min_group; i++)
+			groups[i].delete_(cmd);
 		if (BTREE) btree.delete_from_stack();
 		if (RBTREE) rbtree.delete_from_stack();
 	}
@@ -155,19 +233,57 @@ void Database<T>::delete_(Command& cmd) {
 
 template <class T>
 void Database<T>::select(Command& cmd, FILE * fp) {
-	if (BTREE && cmd.get_c_phone() != COND_NONE &&
-			cmd.get_c_phone() != NE &&
-			cmd.get_oper() != OR &&
-			cmd.get_oper1() != OR) {
+	int g = 0;
+	if (cmd.get_c_group() != COND_NONE
+			&& cmd.get_c_group() != NE
+			&& cmd.get_oper() != OR
+			&& cmd.get_oper1() != OR
+			&& (g = group_hash(cmd)) > 0) {
+if (DEBUG_PRINT) printf("### select from groups\n");
+		switch (cmd.get_c_group()) {
+			case EQ:
+				groups[g].select(cmd, fp);
+				break;
+			case GT:
+				for (int i = g + 1; i < max_group - min_group; i++)
+					groups[i].select(cmd, fp);
+				break;
+			case GE:
+				for (int i = g; i < max_group - min_group; i++)
+					groups[i].select(cmd, fp);
+				break;
+			case LT:
+				for (int i = g - 1; i >= 0; i--)
+					groups[i].select(cmd, fp);
+				break;
+			case LE:
+				for (int i = g; i >= 0; i--)
+					groups[i].select(cmd, fp);
+				break;
+			default:
+				fprintf(stderr, "imp_err_3\n");
+				break;
+		}
+	} else if (BTREE
+			&& cmd.get_c_phone() != COND_NONE
+			&& cmd.get_c_phone() != NE
+			&& cmd.get_c_name() != LIKE
+			&& cmd.get_oper() != OR
+			&& cmd.get_oper1() != OR) {
+if (DEBUG_PRINT) printf("### select from btree\n");
 		btree.select(cmd, fp);
-	} else if (RBTREE && cmd.get_c_name() != COND_NONE &&
-				cmd.get_c_name() != NE &&
-				cmd.get_c_name() != LIKE &&
-				cmd.get_oper() != OR &&
-				cmd.get_oper1() != OR) {
+	} else if (RBTREE
+			&& cmd.get_c_name() != COND_NONE
+			&& cmd.get_c_name() != NE
+			&& cmd.get_c_name() != LIKE
+			&& cmd.get_oper() != OR
+			&& cmd.get_oper1() != OR) {
+if (DEBUG_PRINT) printf("### select from rbtree\n");
 		rbtree.select(cmd);
 	} else {
-		list.select(cmd);
+if (DEBUG_PRINT) printf("### select from all groups\n");
+		for (int i = 0; i < max_group - min_group; i++)
+			groups[i].select(cmd, fp);
 	}
 }
 

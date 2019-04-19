@@ -20,18 +20,19 @@ private:
 	void delete_list();
 
 public:
-	List(Stack<Node<T> *> * st) { stack = st; }
+	List(Stack<Node<T> *> * st = nullptr) { stack = st; }
 	~List() { delete_list(); }
 
+	void init_stack(Stack<Node<T> *> *);
 	Node<T> * add(T&);
 	int read(FILE * fp = stdin);
 	void print(FILE * fp = stdout);
 	void print_back(FILE * fp = stdout);
 	Node<T> * delete_node(Node<T> *, int = REMOVE);
-	void delete_from_stack();
+	void delete_from_stack(int = -1);
 	void add_node(Node<T> *);
 
-	Node<T> * insert(T&);
+	Node<T> * insert(Node<T> *);
 	void delete_(Command&);
 	void select(Command&, FILE * fp = stdout);
 	void remove(Node<T> *);
@@ -46,6 +47,11 @@ public:
 	int get_size() const { return size; }
 
 };
+
+template <class T>
+void List<T>::init_stack(Stack<Node<T> *> * s) {
+	stack = s;
+}
 
 template <class T>
 void List<T>::delete_list() {
@@ -85,13 +91,12 @@ int List<T>::read(FILE * fp) {
 
 template <class T>
 void List<T>::print(FILE * fp) {
-printf("list-------------------------\\\n");
+	printf("List\n");
 	auto c = head;
 	for (int i = 0; c && i < MAX_PRINT; i++, c = c->get_next()) {
 		c->print(fp);
 	}
-	fprintf(fp, "\n");
-printf("-----------------------------/\n");
+	fprintf(fp, "_ _ _ _ _ _ _ _ _ _\n\n");
 }
 
 template <class T>
@@ -125,10 +130,11 @@ Node<T> * List<T>::delete_node(Node<T> * n, int flag) {
 }
 
 template <class T>
-void List<T>::delete_from_stack() {
+void List<T>::delete_from_stack(int g) {
 	stack->goto_top();
 	while (stack->get_curr()) {
-		delete_node(stack->get_curr()->get_data(), SAVE_IN_STACK);
+		if (g == -1 || stack->get_curr()->get_data()->get_group() == g)
+			delete_node(stack->get_curr()->get_data(), SAVE_IN_STACK);
 		stack->goto_next();
 	}
 	stack->goto_top();
@@ -137,29 +143,26 @@ void List<T>::delete_from_stack() {
 template <class T>
 void List<T>::add_node(Node<T> * n) {
 	n->set_next(head);
-	head->set_prev(n);
+	if (head) head->set_prev(n);
 	head = n;
 	size++;
 }
 
 template <class T>
-Node<T> * List<T>::insert(T& a) {
-	if (!head) {
-		head = new Node<T>(a);
-		if (!head) return nullptr;
-		curr = head;
+Node<T> * List<T>::insert(Node<T> * n) {
+	if (head == nullptr) {
+		curr = head = n;
 		size++;
 		return head;
 	} else {
 		auto tmp = head;
-		if ((a < *head) == 0) return nullptr;
+		if ((*n < *head) == 0) return nullptr;
 		while (tmp->get_next()) {
-			if ((a < *(tmp->get_next())) == 0) break;
+			if ((*n < *(tmp->get_next())) == 0) break;
 			tmp = tmp->get_next();
 		}
 		if (tmp->get_next()) return nullptr;
-		tmp->set_next(new Node<T>(a));
-		if (!tmp->get_next()) return nullptr;
+		tmp->set_next(n);
 		tmp->get_next()->set_prev(tmp);
 		size++;
 		return tmp->get_next();

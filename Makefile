@@ -1,4 +1,4 @@
-F = -std=c++11 -O3
+F = -std=c++11 -g
 H = header.h \
 	record.h \
 	command.h \
@@ -10,6 +10,7 @@ H = header.h \
 	btree.h \
 	rbtree_node.h \
 	rbtree.h \
+	group.h \
 	database.h
 M = Makefile
 C = clang++

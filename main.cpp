@@ -1,6 +1,8 @@
 #include "header.h"
 #include "database.h"
 
+//#define MAIN_DEBUG
+
 int main(int argc, char ** argv) {
 	Database<Record> d;
 	const char * file = "a.txt";
@@ -9,19 +11,24 @@ int main(int argc, char ** argv) {
 
 	if (argc > 1) file = argv[1];
 
-/*
-	const char * fcmd = "/Users/admin/Downloads/users_data/commands0.txt";
-//	const char * fcmd = "cmd4.txt";
+#ifdef MAIN_DEBUG
+//	const char * fcmd = \
+		"/Users/admin/Downloads/users_data/commands0.txt";
+	const char * fcmd = "cmd.txt";
 //	const char * fcmd = "/users/data/commands0.txt";
 	const char * fres = "res.txt";
 	FILE * fr = fopen(fcmd, "r");
 	if (!fr) { perror("fr\n"); fclose(fp); return 1; }
 	FILE * fw = fopen(fres, "w");
 	if (!fw) { perror("fw\n"); fclose(fp); fclose(fr); return 1; }
-*/
+#endif
 
 	if (!(fp = fopen(file, "r"))) {
 		fprintf(stderr, "Cannot open file %s\n", file);
+#ifdef MAIN_DEBUG
+		fclose(fr);
+		fclose(fw);
+#endif
 		return 1;
 	}
 
@@ -36,20 +43,29 @@ int main(int argc, char ** argv) {
 		case MEM_ERR:
 			fprintf(stderr, "Memory error\n");
 			break;
-		case ALL_RIGHT: break;
+		case DATA_ERR:
+			fprintf(stderr, "Data error\n");
+			break;
+		default:
+			fprintf(stderr, "Unknown error\n");
 		}
 		fclose(fp);
+#ifdef MAIN_DEBUG
+		fclose(fr);
+		fclose(fw);
+#endif
 		return 2;
 	}
 	fclose(fp);
 	
-/*
-	d.start(fr, fw);
+#ifdef MAIN_DEBUG
+//	d.start(fr, fw);
 	d.start(fr, stdout);
 	fclose(fr);
 	fclose(fw);
-*/
+#else
 	d.start();
+#endif
 
 	return 0;
 }
