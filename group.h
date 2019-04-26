@@ -136,9 +136,9 @@ void Group<T>::select(Command& cmd, FILE * fp) {
 				cmd.get_c_name() != LIKE &&
 				cmd.get_oper() != OR &&
 				cmd.get_oper1() != OR) {
-		rbtree.select(cmd);
+		rbtree.select(cmd, fp);
 	} else {
-		list.select(cmd);
+		list.select(cmd, fp);
 	}
 }
 

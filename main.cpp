@@ -14,13 +14,13 @@ int main(int argc, char ** argv) {
 #ifdef MAIN_DEBUG
 //	const char * fcmd = \
 		"/Users/admin/Downloads/users_data/commands0.txt";
-	const char * fcmd = "cmd.txt";
-//	const char * fcmd = "/users/data/commands0.txt";
+//	const char * fcmd = "cmd.txt";
+	const char * fcmd = "/home/username/Downloads/prog_files/commands5.txt";
 	const char * fres = "res.txt";
 	FILE * fr = fopen(fcmd, "r");
-	if (!fr) { perror("fr\n"); fclose(fp); return 1; }
+	if (!fr) { perror("fr\n"); return 1; }
 	FILE * fw = fopen(fres, "w");
-	if (!fw) { perror("fw\n"); fclose(fp); fclose(fr); return 1; }
+	if (!fw) { perror("fw\n"); fclose(fr); return 1; }
 #endif
 
 	if (!(fp = fopen(file, "r"))) {
@@ -59,8 +59,8 @@ int main(int argc, char ** argv) {
 	fclose(fp);
 	
 #ifdef MAIN_DEBUG
-//	d.start(fr, fw);
-	d.start(fr, stdout);
+	d.start(fr, fw);
+//	d.start(fr, stdout);
 	fclose(fr);
 	fclose(fw);
 #else

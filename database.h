@@ -279,7 +279,7 @@ if (DEBUG_PRINT) printf("### select from btree\n");
 			&& cmd.get_oper() != OR
 			&& cmd.get_oper1() != OR) {
 if (DEBUG_PRINT) printf("### select from rbtree\n");
-		rbtree.select(cmd);
+		rbtree.select(cmd, fp);
 	} else {
 if (DEBUG_PRINT) printf("### select from all groups\n");
 		for (int i = 0; i < max_group - min_group; i++)
