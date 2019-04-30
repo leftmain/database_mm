@@ -38,7 +38,7 @@ public:
 	int add(T);
 	int read(const char *, int);
 	void print(FILE * = stderr, BNode<T> * = nullptr, int = 0);
-	void print(int, BNode<T> *, int = 0);
+	void print(int, BNode<T> * = nullptr, int = 0);
 
 	void goto_root() { curr = root; }
 	BNode<T> * get_curr() const { return curr; }

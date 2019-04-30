@@ -27,6 +27,7 @@ public:
 	Node<T> * add(T&);
 	int read(FILE * = stdin);
 	void print(FILE * = stdout);
+	void print(int);
 	void print_back(FILE * = stdout);
 	Node<T> * delete_node(Node<T> *, int = REMOVE);
 	void delete_from_stack(int = -1);
@@ -91,12 +92,22 @@ int List<T>::read(FILE * fp) {
 
 template <class T>
 void List<T>::print(FILE * fp) {
+	int fd = fileno(fp);
+	if (fd < 0) {
+		perror("fileno error");
+		return;
+	}
+	print(fd);
+}
+
+template <class T>
+void List<T>::print(int fd) {
 	printf("List\n");
 	auto c = head;
 	for (int i = 0; c && i < MAX_PRINT; i++, c = c->get_next()) {
-		c->print(fp);
+		c->print(fd);
 	}
-	fprintf(fp, "_ _ _ _ _ _ _ _ _ _\n\n");
+	dprintf(fd, "_ _ _ _ _ _ _ _ _ _\n\n");
 }
 
 template <class T>

@@ -7,6 +7,14 @@
 #include "header.h"
 #include "database.h"
 
+#define print_time() \
+	do { \
+		clock_gettime(CLOCK_MONOTONIC, &t2); \
+		fprintf(stderr, "Time: %.2lf\n", t2.tv_sec - t1.tv_sec \
+				+ (t2.tv_nsec - t1.tv_nsec) / M); \
+	} while (0)
+
+
 int new_client(int, fd_set *);
 int old_client(int, fd_set *, Database<Record> *);
 void write_on_socket(int, char *, int);
@@ -72,9 +80,11 @@ int main(int argc, char ** argv) {
 	}
 
 	fd_set active_set, read_set;
-
 	FD_ZERO(&active_set);
 	FD_SET(sock, &active_set);
+
+	struct timespec t1, t2;
+	clock_gettime(CLOCK_MONOTONIC, &t1);
 	while (true) {
 		read_set = active_set;
 		if (select(FD_SETSIZE, &read_set, 0, 0, 0) < 0) {
@@ -97,6 +107,7 @@ int main(int argc, char ** argv) {
 						close(sock);
 						return 3;
 					} else if (res == 1) {
+						print_time();
 						write_on_socket(i, nullptr, -1);
 						close(sock);
 						return 0;
@@ -105,6 +116,7 @@ int main(int argc, char ** argv) {
 			}
 		}
 	}
+	print_time();
 
 	close(sock);
 	return 0;

@@ -7,9 +7,11 @@
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
+#include <time.h>
 
 #define LEN 1024
 #define PORT 1234
+#define M 1000000000.
 //#define DEBUG
 
 #define ALL_RIGHT  	0

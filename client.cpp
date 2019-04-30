@@ -37,6 +37,9 @@ int main(int argc, char ** argv) {
 		close(sock);
 		return 2;
 	}
+
+	struct timespec t1, t2;
+	clock_gettime(CLOCK_MONOTONIC, &t1);
 	while (fgets(buf, LEN, fp)) {
 		len = strlen(buf);
 		write(sock, &len, sizeof(int));
@@ -46,6 +49,8 @@ int main(int argc, char ** argv) {
 		}
 		if (res < 0) break;
 	}
+	clock_gettime(CLOCK_MONOTONIC, &t2);
+	fprintf(stderr, "Time: %.2lf\n", t2.tv_sec - t1.tv_sec + (t2.tv_nsec - t1.tv_nsec) / M);
 
 	close(sock);
 	return 0;

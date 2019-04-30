@@ -1,4 +1,4 @@
-F = -std=c++11 -g
+F = -std=c++11 -O3
 H = header.h \
 	record.h \
 	command.h \
