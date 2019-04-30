@@ -26,8 +26,8 @@ private:
 	void merge(BNode<T> *, int); /** merge i and i+1 */
 	void balance(BNode<T> *, int);
 	T delete_element(T, BNode<T> *, bool = false);
-	void process(T, int, FILE * = stdout);
-	void search_subtree(Command&, BNode<T> *, int, FILE * = stdout);
+	void process(T, int, int = STDOUT_FILENO);
+	void search_subtree(Command&, BNode<T> *, int, int = STDOUT_FILENO);
 
 
 public:
@@ -38,6 +38,7 @@ public:
 	int add(T);
 	int read(const char *, int);
 	void print(FILE * = stderr, BNode<T> * = nullptr, int = 0);
+	void print(int, BNode<T> *, int = 0);
 
 	void goto_root() { curr = root; }
 	BNode<T> * get_curr() const { return curr; }
@@ -45,10 +46,10 @@ public:
 	void set_curr(BNode<T> * c) { curr = c; }
 	void set_root(BNode<T> * r) { root = r; }
 
-	void select(Command&, FILE * = stdout);
+	void select(Command&, int = STDOUT_FILENO);
 	void delete_(Command&);
 	void delete_from_stack(int = -1);
-	void search(Command&, BNode<T> *, int, FILE * = stdout);
+	void search(Command&, BNode<T> *, int, int = STDOUT_FILENO);
 
 };
 
@@ -170,18 +171,28 @@ BNode<T> * BTree<T>::add(T * a, BNode<T> * r) {
 
 template <class T>
 void BTree<T>::print(FILE * fp, BNode<T> * r, int level) {
+	int fd = fileno(fp);
+	if (fd < 0) {
+		perror("print() in BTree error");
+		return;
+	}
+	print(fd, r, level);
+}
+
+template <class T>
+void BTree<T>::print(int fd, BNode<T> * r, int level) {
 	int i = 0;
 	if (r == nullptr) r = root;
 	if (r == nullptr) return;
 	if (level > MAX_LEVEL) return;
-	if (level == 0) fprintf(fp, "BTree\n");
-	for (i = 0; i < level; i++) fprintf(fp, "    ");
+	if (level == 0) dprintf(fd, "BTree\n");
+	for (i = 0; i < level; i++) dprintf(fd, "    ");
 	r->print();
 	if (r->get_child()) {
 		for (i = 0; i <= r->get_len(); i++)
-			print(fp, r->get_child() + i, level + 1);
+			print(fd, r->get_child() + i, level + 1);
 	}
-	if (level == 0) fprintf(fp, "_ _ _ _ _ _ _ _ _ _\n\n");
+	if (level == 0) dprintf(fd, "_ _ _ _ _ _ _ _ _ _\n\n");
 }
 
 template <class T>
@@ -339,30 +350,30 @@ void BTree<T>::delete_(Command& cmd) {
 }
 
 template <class T>
-void BTree<T>::process(T a, int flag, FILE * fp) {
-	if (flag & PRINT) a->print(fp);
+void BTree<T>::process(T a, int flag, int fd) {
+	if (flag & PRINT) a->print(fd);
 	else if (flag & SAVE_IN_STACK) stack->push(a);
 }
 
 template <class T>
-void BTree<T>::search_subtree(Command& cmd, BNode<T> * r, int flag, FILE * fp) {
+void BTree<T>::search_subtree(Command& cmd, BNode<T> * r, int flag, int fd) {
 	if (r == nullptr) return;
 	for (int i = 0; i < r->get_len(); i++)
 		if (cmd.check(*(r->get_data()[i])))
-			process(r->get_data()[i], flag, fp);
+			process(r->get_data()[i], flag, fd);
 	if (r->get_child()) {
 		for (int i = 0; i <= r->get_len(); i++)
-			search_subtree(cmd, r->get_child() + i, flag, fp);
+			search_subtree(cmd, r->get_child() + i, flag, fd);
 	}
 }
 
 template <class T>
-void BTree<T>::select(Command& cmd, FILE * fp) {
-	search(cmd, root, PRINT, fp);
+void BTree<T>::select(Command& cmd, int fd) {
+	search(cmd, root, PRINT, fd);
 }
 
 template <class T>
-void BTree<T>::search(Command& cmd, BNode<T> * r, int flag, FILE * fp) {
+void BTree<T>::search(Command& cmd, BNode<T> * r, int flag, int fd) {
 	int i = r->bin_search(cmd.get_record(), cmp_p);
 	int j = 0;
 	switch (cmd.get_c_phone()) {
@@ -370,46 +381,46 @@ void BTree<T>::search(Command& cmd, BNode<T> * r, int flag, FILE * fp) {
 			while (i < r->get_len() &&
 					cmp_p(r->get_data()[i], cmd.get_record()) == 0) {
 				if (cmd.check(*(r->get_data()[i])))
-					process(r->get_data()[i], flag, fp);
+					process(r->get_data()[i], flag, fd);
 				if (r->get_child())
-					search(cmd, r->get_child() + i, flag, fp);
+					search(cmd, r->get_child() + i, flag, fd);
 				i++;
 			}
 			if (r->get_child())
-				search(cmd, r->get_child() + i, flag, fp);
+				search(cmd, r->get_child() + i, flag, fd);
 			break;
 		case GT:
 			while (i < r->get_len() &&
 				cmp_p(r->get_data()[i], cmd.get_record()) == 0) i++;
 			if (r->get_child())
-				search(cmd, r->get_child() + i, flag, fp);
+				search(cmd, r->get_child() + i, flag, fd);
 			while (i < r->get_len()) {
 				if (cmd.check(*(r->get_data()[i])))
-					process(r->get_data()[i], flag, fp);
+					process(r->get_data()[i], flag, fd);
 				if (r->get_child())
-					search_subtree(cmd, r->get_child() + i + 1, flag, fp);
+					search_subtree(cmd, r->get_child() + i + 1, flag, fd);
 				i++;
 			}
 			break;
 		case LT:
-			search(cmd, r->get_child() + i, flag, fp);
+			search(cmd, r->get_child() + i, flag, fd);
 			i--;
 			while (i >= 0) {
 				if (cmd.check(*(r->get_data()[i])))
-					process(r->get_data()[i], flag, fp);
+					process(r->get_data()[i], flag, fd);
 				if (r->get_child())
-					search_subtree(cmd, r->get_child() + i, flag, fp);
+					search_subtree(cmd, r->get_child() + i, flag, fd);
 				i--;
 			}
 			break;
 		case GE:
 			if (r->get_child())
-				search(cmd, r->get_child() + i, flag, fp);
+				search(cmd, r->get_child() + i, flag, fd);
 			while (i < r->get_len()) {
 				if (cmd.check(*(r->get_data()[i])))
-					process(r->get_data()[i], flag, fp);
+					process(r->get_data()[i], flag, fd);
 				if (r->get_child())
-					search_subtree(cmd, r->get_child() + i + 1, flag, fp);
+					search_subtree(cmd, r->get_child() + i + 1, flag, fd);
 				i++;
 			}
 			break;
@@ -418,19 +429,19 @@ void BTree<T>::search(Command& cmd, BNode<T> * r, int flag, FILE * fp) {
 			while (i < r->get_len() &&
 				cmp_p(r->get_data()[i], cmd.get_record()) == 0) {
 				if (cmd.check(*(r->get_data()[i])))
-					process(r->get_data()[i], flag, fp);
+					process(r->get_data()[i], flag, fd);
 				if (r->get_child())
-					search_subtree(cmd, r->get_child() + i, flag, fp);
+					search_subtree(cmd, r->get_child() + i, flag, fd);
 				i++;
 			}
 			if (r->get_child())
-				search(cmd, r->get_child() + i, flag, fp);
+				search(cmd, r->get_child() + i, flag, fd);
 			i = j;
 			while (j >= 0) {
 				if (cmd.check(*(r->get_data()[j])))
-					process(r->get_data()[j], flag, fp);
+					process(r->get_data()[j], flag, fd);
 				if (r->get_child())
-					search_subtree(cmd, r->get_child() + j, flag, fp);
+					search_subtree(cmd, r->get_child() + j, flag, fd);
 				j--;
 			}
 			break;

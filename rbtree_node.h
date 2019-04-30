@@ -26,6 +26,7 @@ public:
 	void operator=(const RBNode&);
 	void get(const RBNode *);
 	void print(FILE * = stdout);
+	void print(int);
 
 	void set_right(RBNode * r) { right = r; }
 	void set_left(RBNode * l) { left = l; }
@@ -74,10 +75,20 @@ void RBNode<T>::get(const RBNode * a) {
 
 template <class T>
 void RBNode<T>::print(FILE * fp) {
-	if (red) fprintf(fp, "-");
-	else fprintf(fp, "*");
-	data->draw(fp);
-	fprintf(fp, "\n");
+	int fd = fileno(fp);
+	if (fd < 0) {
+		perror("print() in BTree error");
+		return;
+	}
+	print(fd);
+}
+
+template <class T>
+void RBNode<T>::print(int fd) {
+	if (red) dprintf(fd, "-");
+	else dprintf(fd, "*");
+	data->draw(fd);
+	dprintf(fd, "\n");
 }
 
 template <class T>

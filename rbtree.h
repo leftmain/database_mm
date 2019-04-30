@@ -22,9 +22,9 @@ private:
 	void rotate_left(RBNode<T> *);
 	bool balance_d(RBNode<T> *, RBNode<T> *, RBNode<T> *);
 	RBNode<T> * delete_element(T, RBNode<T> *, bool = false);
-	void process(T, int, FILE * = stdout);
-	void search_subtree(Command&, RBNode<T> *, int, FILE * = stdout);
-	void search(Command&, RBNode<T> *, int, FILE * = stdout);
+	void process(T, int, int = STDOUT_FILENO);
+	void search_subtree(Command&, RBNode<T> *, int, int = STDOUT_FILENO);
+	void search(Command&, RBNode<T> *, int, int = STDOUT_FILENO);
 
 public:
 	RBTree(Stack<T> * st = nullptr) { stack = st; }
@@ -33,9 +33,10 @@ public:
 	void init_stack(Stack<T> *);
 	int add(T, RBNode<T> * = nullptr);
 	void print(FILE * = stdout, RBNode<T> * = nullptr, int = 0);
+	void print(int, RBNode<T> * = nullptr, int = 0);
 	void delete_from_stack(int = -1);
 	void delete_(Command&);
-	void select(Command&, FILE * = stdout);
+	void select(Command&, int = STDOUT_FILENO);
 
 	RBNode<T> * get_root() const { return root; }
 	RBNode<T> * get_curr() const { return curr; }
@@ -313,77 +314,76 @@ RBNode<T> * RBTree<T>::delete_element(T a, RBNode<T> * r, bool found) {
 }
 
 template <class T>
-void RBTree<T>::process(T a, int flag, FILE * fp) {
-	if (flag & PRINT) a->print(fp);
+void RBTree<T>::process(T a, int flag, int fd) {
+	if (flag & PRINT) a->print(fd);
 	else if (flag & SAVE_IN_STACK) stack->push(a);
 }
 
 template <class T>
-void RBTree<T>::search_subtree(Command& cmd, RBNode<T> * r, \
-										int flag, FILE * fp) {
+void RBTree<T>::search_subtree(Command& cmd, RBNode<T> * r, int flag, int fd) {
 	if (cmd.check(*r->get_data()))
-		process(r->get_data(), flag, fp);
+		process(r->get_data(), flag, fd);
 	if (r->get_right())
-		search_subtree(cmd, r->get_right(), flag, fp);
+		search_subtree(cmd, r->get_right(), flag, fd);
 	if (r->get_left())
-		search_subtree(cmd, r->get_left(), flag, fp);
+		search_subtree(cmd, r->get_left(), flag, fd);
 }
 
 template <class T>
-void RBTree<T>::search(Command& cmd, RBNode<T> * r, int flag, FILE * fp) {
+void RBTree<T>::search(Command& cmd, RBNode<T> * r, int flag, int fd) {
 	int i = cmp_n(r->get_data(), cmd.get_record());
 	switch (cmd.get_c_name()) {
 		case EQ:
 			if (i == 0 && cmd.check(*r->get_data()))
-				process(r->get_data(), flag, fp);
+				process(r->get_data(), flag, fd);
 			if (i <= 0 && r->get_right())
-				search(cmd, r->get_right(), flag, fp);
+				search(cmd, r->get_right(), flag, fd);
 			if (i >= 0 && r->get_left())
-				search(cmd, r->get_left(), flag, fp);
+				search(cmd, r->get_left(), flag, fd);
 			break;
 		case GT:
 			if (i > 0) {
 				if (cmd.check(*r->get_data()))
-					process(r->get_data(), flag, fp);
+					process(r->get_data(), flag, fd);
 				if (r->get_right())
-					search_subtree(cmd, r->get_right(), flag, fp);
+					search_subtree(cmd, r->get_right(), flag, fd);
 				if (r->get_left())
-					search(cmd, r->get_left(), flag, fp);
+					search(cmd, r->get_left(), flag, fd);
 			} else if (r->get_right())
-				search(cmd, r->get_right(), flag, fp);
+				search(cmd, r->get_right(), flag, fd);
 			break;
 		case LT:
 			if (i < 0) {
 				if (cmd.check(*r->get_data()))
-					process(r->get_data(), flag, fp);
+					process(r->get_data(), flag, fd);
 				if (r->get_left())
-					search_subtree(cmd, r->get_left(), flag, fp);
+					search_subtree(cmd, r->get_left(), flag, fd);
 				if (r->get_right())
-					search(cmd, r->get_right(), flag, fp);
+					search(cmd, r->get_right(), flag, fd);
 			} else if (r->get_left())
-				search(cmd, r->get_left(), flag, fp);
+				search(cmd, r->get_left(), flag, fd);
 			break;
 		case GE:
 			if (i >= 0) {
 				if (cmd.check(*r->get_data()))
-					process(r->get_data(), flag, fp);
+					process(r->get_data(), flag, fd);
 				if (r->get_right())
-					search_subtree(cmd, r->get_right(), flag, fp);
+					search_subtree(cmd, r->get_right(), flag, fd);
 				if (r->get_left())
-					search(cmd, r->get_left(), flag, fp);
+					search(cmd, r->get_left(), flag, fd);
 			} else if (r->get_right())
-				search(cmd, r->get_right(), flag, fp);
+				search(cmd, r->get_right(), flag, fd);
 			break;
 		case LE:
 			if (i <= 0) {
 				if (cmd.check(*r->get_data()))
-					process(r->get_data(), flag, fp);
+					process(r->get_data(), flag, fd);
 				if (r->get_left())
-					search_subtree(cmd, r->get_left(), flag, fp);
+					search_subtree(cmd, r->get_left(), flag, fd);
 				if (r->get_right())
-					search(cmd, r->get_right(), flag, fp);
+					search(cmd, r->get_right(), flag, fd);
 			} else if (r->get_left())
-				search(cmd, r->get_left(), flag, fp);
+				search(cmd, r->get_left(), flag, fd);
 			break;
 		case LIKE:
 			break;
@@ -436,15 +436,25 @@ int RBTree<T>::add(T a, RBNode<T> * r) {
 
 template <class T>
 void RBTree<T>::print(FILE * fp, RBNode<T> * r, int level) {
+	int fd = fileno(fp);
+	if (fd < 0) {
+		perror("print() in RBTree error");
+		return;
+	}
+	print(fd, r, level);
+}
+
+template <class T>
+void RBTree<T>::print(int fd, RBNode<T> * r, int level) {
 	if (r == nullptr) r = root;
 	if (r == nullptr) return;
 	if (level > MAX_RB_LEVEL) return;
-	if (level == 0) fprintf(fp, "RBTree\n");
-	if (r->get_right()) print(fp, r->get_right(), level + 1);
-	for (int i = 0; i < level; i++) fprintf(fp, "    ");
-	r->print(fp);
-	if (r->get_left()) print(fp, r->get_left(), level + 1);
-	if (level == 0) fprintf(fp, "_ _ _ _ _ _ _ _ _ _\n\n");
+	if (level == 0) dprintf(fd, "RBTree\n");
+	if (r->get_right()) print(fd, r->get_right(), level + 1);
+	for (int i = 0; i < level; i++) dprintf(fd, "    ");
+	r->print(fd);
+	if (r->get_left()) print(fd, r->get_left(), level + 1);
+	if (level == 0) dprintf(fd, "_ _ _ _ _ _ _ _ _ _\n\n");
 }
 
 template <class T>
@@ -465,8 +475,8 @@ void RBTree<T>::delete_(Command& cmd) {
 }
 
 template <class T>
-void RBTree<T>::select(Command& cmd, FILE * fp) {
-	search(cmd, root, PRINT, fp);
+void RBTree<T>::select(Command& cmd, int fd) {
+	search(cmd, root, PRINT, fd);
 }
 
 #endif

@@ -82,7 +82,8 @@ public:
 	~Command() {}
 
 	int parse(const char *);
-	void print(FILE * fp = stdout);
+	void print(FILE * = stdout);
+	void dprint(int = STDOUT_FILENO);
 	void clear();
 	int check(const Record&);
 
@@ -213,6 +214,7 @@ int Command::parse(const char * str) {
 		return 0;
 	} else if (!strcmp(buf, "stop")) {
 		type = STOP;
+		return 0;
 	} else if (!strcmp(buf, "select")) {
 		type = SELECT;
 
@@ -307,27 +309,31 @@ void Command::print_cond() {
 }
 
 void Command::print(FILE * fp) {
+	dprint(fileno(fp));
+}
+
+void Command::dprint(int fd) {
 	memset(buf, 0, LEN);
 	switch (type) {
 		case QUIT:
-			fprintf(fp, "quit;\n");
+			dprintf(fd, "quit;\n");
 			return;
 		case STOP:
-			fprintf(fp, "stop;\n");
+			dprintf(fd, "stop;\n");
 			return;
 		case SELECT:
 			strcat(buf, "select * where");
 			print_cond();
-			fprintf(fp, "%s;\n", buf);
+			dprintf(fd, "%s;\n", buf);
 			return;
 		case INSERT:
-			fprintf(fp, "insert (%s, %d, %d);\n", \
+			dprintf(fd, "insert (%s, %d, %d);\n", \
 					name.get(), phone, group);
 			return;
 		case DELETE:
 			strcat(buf, "delete where");
 			print_cond();
-			fprintf(fp, "%s;\n", buf);
+			dprintf(fd, "%s;\n", buf);
 			return;
 		case CMD_NONE:
 			return;

@@ -5,5 +5,8 @@ leak.out
 *.txt
 a
 a.out
+client
+server
 r
+push
 *.sh

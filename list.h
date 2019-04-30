@@ -25,16 +25,16 @@ public:
 
 	void init_stack(Stack<Node<T> *> *);
 	Node<T> * add(T&);
-	int read(FILE * fp = stdin);
-	void print(FILE * fp = stdout);
-	void print_back(FILE * fp = stdout);
+	int read(FILE * = stdin);
+	void print(FILE * = stdout);
+	void print_back(FILE * = stdout);
 	Node<T> * delete_node(Node<T> *, int = REMOVE);
 	void delete_from_stack(int = -1);
 	void add_node(Node<T> *);
 
 	Node<T> * insert(Node<T> *);
 	void delete_(Command&);
-	void select(Command&, FILE * fp = stdout);
+	void select(Command&, int = STDOUT_FILENO);
 	void remove(Node<T> *);
 
 	void goto_head() { curr = head; }
@@ -184,11 +184,11 @@ void List<T>::delete_(Command& cmd) {
 }
 
 template <class T>
-void List<T>::select(Command& cmd, FILE * fp) {
+void List<T>::select(Command& cmd, int fd) {
 	auto tmp = head;
 	while (tmp) {
 		if (cmd.check(*tmp)) {
-			tmp->print(fp);
+			tmp->print(fd);
 		}
 		tmp = tmp->get_next();
 	}

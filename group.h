@@ -28,8 +28,9 @@ public:
 	Node<T> * insert(T&);
 	void delete_(Command&);
 	void delete_from_stack(int);
-	void select(Command&, FILE * = stdout);
+	void select(Command&, int = STDOUT_FILENO);
 	void print(int, FILE * = stderr);
+	void print(int, int);
 
 };
 
@@ -125,32 +126,41 @@ void Group<T>::delete_from_stack(int g) {
 }
 
 template <class T>
-void Group<T>::select(Command& cmd, FILE * fp) {
+void Group<T>::select(Command& cmd, int fd) {
 	if (G_BTREE && cmd.get_c_phone() != COND_NONE &&
 			cmd.get_c_phone() != NE &&
 			cmd.get_oper() != OR &&
 			cmd.get_oper1() != OR) {
-		btree.select(cmd, fp);
+		btree.select(cmd, fd);
 	} else if (G_RBTREE && cmd.get_c_name() != COND_NONE &&
 				cmd.get_c_name() != NE &&
 				cmd.get_c_name() != LIKE &&
 				cmd.get_oper() != OR &&
 				cmd.get_oper1() != OR) {
-		rbtree.select(cmd, fp);
+		rbtree.select(cmd, fd);
 	} else {
-		list.select(cmd, fp);
+		list.select(cmd, fd);
 	}
 }
 
 template <class T>
 void Group<T>::print(int g, FILE * fp) {
+	int fd = fileno(fp);
+	if (fd < 0) {
+		perror("print() in Group error");
+		return;
+	}
+	print(g, fd);
+}
+
+template <class T>
+void Group<T>::print(int g, int fd) {
 	if (list.get_size() == 0) return;
-	fprintf(fp, "Group %d [%d] ------------------\\\n", \
-							g, list.get_size());
-	list.print(fp);
-	btree.print(fp);
-	rbtree.print(fp);
-	fprintf(fp, "--------------------------------/\n");
+	dprintf(fd, "Group %d [%d] ------------------\\\n", g, list.get_size());
+	list.print(fd);
+	btree.print(fd);
+	rbtree.print(fd);
+	dprintf(fd, "--------------------------------/\n");
 }
 
 #endif

@@ -25,7 +25,7 @@ private:
 
 	int insert(T&);
 	void delete_(Command&);
-	void select(Command&, FILE * = stdout);
+	void select(Command&, int = STDOUT_FILENO);
 	void rm_group_from_stack();
 
 public:
@@ -34,7 +34,11 @@ public:
 
 	int read(FILE *);
 	int apply_command(Command&, FILE * = stdout);
+	int apply_command(Command&, int);
 	void start(FILE * = stdin, FILE * = stdout);
+	void dstart(int, int);
+	void print(FILE * = stderr);
+	void print(int);
 
 };
 
@@ -50,7 +54,7 @@ template <class T>
 int Database<T>::group_hash(T& a) {
 	int g = a.get_group();
 	if (g < min_group || g > max_group) {
-		fprintf(stderr, "group %d???\n", g);
+//		fprintf(stderr, "group %d???\n", g);
 		return -1;
 	}
 	return g - min_group;
@@ -82,9 +86,19 @@ int Database<T>::read(FILE * fp) {
 
 template <class T>
 int Database<T>::apply_command(Command& c, FILE * fp) {
+	int fd = fileno(fp);
+	if (fd < 0) {
+		perror("apply_command() error");
+		return -1;
+	}
+	return apply_command(c, fd);
+}
+
+template <class T>
+int Database<T>::apply_command(Command& c, int fd) {
 	switch (c.get_type()) {
 		case SELECT:
-			select(c, fp);
+			select(c, fd);
 			break;
 		case INSERT:
 			return insert(c);
@@ -100,6 +114,17 @@ int Database<T>::apply_command(Command& c, FILE * fp) {
 
 template <class T>
 void Database<T>::start(FILE * in, FILE * out) {
+	int fd_in = fileno(in);
+	int fd_out = fileno(out);
+	if (fd_in < 0 || fd_out < 0) {
+		perror("fileno() error");
+		return;
+	}
+	dstart(fd_in, fd_out);
+}
+
+template <class T>
+void Database<T>::dstart(int in, int out) {
 	Command c;
 	char buf[LEN];
 	double t = clock();
@@ -110,7 +135,12 @@ void Database<T>::start(FILE * in, FILE * out) {
 		if (BTREE) btree.print();
 		if (RBTREE) rbtree.print();
 	}
-	while (fgets(buf, LEN, in)) {
+	FILE * in_fp = fdopen(in, "r");
+	if (in_fp == nullptr) {
+		perror("fdopen() in dstart error");
+		return;
+	}
+	while (fgets(buf, LEN, in_fp)) {
 //getchar();
 		res = c.parse(buf);
 		if (DEBUG_PRINT) {
@@ -123,10 +153,7 @@ void Database<T>::start(FILE * in, FILE * out) {
 		if (res) apply_command(c, out);
 		else if (c.get_type() == QUIT) break;
 		if (DEBUG_PRINT) {
-			for (int i = 0; i < max_group - min_group; i++)
-				groups[i].print(i + min_group);
-			if (BTREE) btree.print();
-			if (RBTREE) rbtree.print();
+			print();
 		}
 		c.clear();
 	}
@@ -232,7 +259,7 @@ if (DEBUG_PRINT) printf("### delete from all groups\n");
 }
 
 template <class T>
-void Database<T>::select(Command& cmd, FILE * fp) {
+void Database<T>::select(Command& cmd, int fd) {
 	int g = 0;
 	if (cmd.get_c_group() != COND_NONE
 			&& cmd.get_c_group() != NE
@@ -242,23 +269,23 @@ void Database<T>::select(Command& cmd, FILE * fp) {
 if (DEBUG_PRINT) printf("### select from groups\n");
 		switch (cmd.get_c_group()) {
 			case EQ:
-				groups[g].select(cmd, fp);
+				groups[g].select(cmd, fd);
 				break;
 			case GT:
 				for (int i = g + 1; i < max_group - min_group; i++)
-					groups[i].select(cmd, fp);
+					groups[i].select(cmd, fd);
 				break;
 			case GE:
 				for (int i = g; i < max_group - min_group; i++)
-					groups[i].select(cmd, fp);
+					groups[i].select(cmd, fd);
 				break;
 			case LT:
 				for (int i = g - 1; i >= 0; i--)
-					groups[i].select(cmd, fp);
+					groups[i].select(cmd, fd);
 				break;
 			case LE:
 				for (int i = g; i >= 0; i--)
-					groups[i].select(cmd, fp);
+					groups[i].select(cmd, fd);
 				break;
 			default:
 				fprintf(stderr, "imp_err_3\n");
@@ -271,7 +298,7 @@ if (DEBUG_PRINT) printf("### select from groups\n");
 			&& cmd.get_oper() != OR
 			&& cmd.get_oper1() != OR) {
 if (DEBUG_PRINT) printf("### select from btree\n");
-		btree.select(cmd, fp);
+		btree.select(cmd, fd);
 	} else if (RBTREE
 			&& cmd.get_c_name() != COND_NONE
 			&& cmd.get_c_name() != NE
@@ -279,12 +306,30 @@ if (DEBUG_PRINT) printf("### select from btree\n");
 			&& cmd.get_oper() != OR
 			&& cmd.get_oper1() != OR) {
 if (DEBUG_PRINT) printf("### select from rbtree\n");
-		rbtree.select(cmd, fp);
+		rbtree.select(cmd, fd);
 	} else {
 if (DEBUG_PRINT) printf("### select from all groups\n");
 		for (int i = 0; i < max_group - min_group; i++)
-			groups[i].select(cmd, fp);
+			groups[i].select(cmd, fd);
 	}
+}
+
+template <class T>
+void Database<T>::print(FILE * fp) {
+	int fd = fileno(fp);
+	if (fd < 0) {
+		perror("print() error");
+		return;
+	}
+	print(fd);
+}
+
+template <class T>
+void Database<T>::print(int fp) {
+//	for (int i = 0; i < max_group - min_group; i++) \
+		groups[i].print(i + min_group);
+	if (BTREE) btree.print();
+	if (RBTREE) rbtree.print();
 }
 
 #endif

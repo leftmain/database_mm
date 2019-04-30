@@ -3,6 +3,8 @@
 
 #include "header.h"
 
+static char buff[LEN];
+
 class Record 
 {
 protected:
@@ -24,7 +26,9 @@ public:
 	int operator<(const Record&) const;
 	int read(FILE *);
 	void print(FILE * = stdout) const;
+	void print(int) const;
 	void draw(FILE * = stdout) const;
+	void draw(int = STDOUT_FILENO) const;
 	void swap(Record&);
 	void move(Record&);
 
@@ -91,18 +95,28 @@ int Record::operator<(const Record& rhs) const {
 }
 
 int Record::read(FILE * fp) {
-	char buf[LEN];
 	int p = 0, g = 0;
-	if (fscanf(fp, "%s%d%d", buf, &p, &g) != 3) return CANNOT_READ;
-	return init(buf, p, g);
+	if (fscanf(fp, "%s%d%d", buff, &p, &g) != 3) return CANNOT_READ;
+	return init(buff, p, g);
 }
 
 void Record::print(FILE * fp) const {
 	fprintf(fp, "%s\t%d\t%d\n", name.get(), phone, group);
 }
 
+void Record::print(int fd) const {
+	sprintf(buff, "%s\t%d\t%d\n", name.get(), phone, group);
+	int l = strlen(buff);
+	write(fd, &l, sizeof(int));
+	write(fd, buff, l);
+}
+
 void Record::draw(FILE * fp) const {
 	fprintf(fp, "[%s %d %d] ", name.get(), phone, group);
+}
+
+void Record::draw(int fd) const {
+	dprintf(fd, "[%s %d %d] ", name.get(), phone, group);
 }
 
 void Record::swap(Record& a) {

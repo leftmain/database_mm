@@ -36,6 +36,7 @@ public:
 	int bin_search(Record *, int (*)(const Record *, const T) = cmp);
 	void clear();
 	void print(FILE * = stdout);
+	void print(int);
 
 	T * get_data() const { return data; }
 	BNode * get_child() const { return child; }
@@ -245,10 +246,20 @@ void BNode<T>::clear() {
 
 template <class T>
 void BNode<T>::print(FILE * fp) {
+	int fd = fileno(fp);
+	if (fd < 0) {
+		perror("print() in BNode error");
+		return;
+	}
+	print(fd);
+}
+
+template <class T>
+void BNode<T>::print(int fd) {
 	if (data == nullptr) return;
 	for (int i = 0; i < MAX_NODE_PRINT && i < len; i++)
-		if (data[i]) data[i]->draw(fp);
-	fprintf(fp, "\n");
+		if (data[i]) data[i]->draw(fd);
+	dprintf(fd, "\n");
 }
 
 template <class T>

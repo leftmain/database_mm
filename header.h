@@ -5,8 +5,12 @@
 #include <utility>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
+#include <unistd.h>
 
 #define LEN 1024
+#define PORT 1234
+//#define DEBUG
 
 #define ALL_RIGHT  	0
 #define CANNOT_OPEN	1
