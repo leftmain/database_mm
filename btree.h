@@ -374,6 +374,7 @@ void BTree<T>::select(Command& cmd, int fd) {
 
 template <class T>
 void BTree<T>::search(Command& cmd, BNode<T> * r, int flag, int fd) {
+	if (r == nullptr) return;
 	int i = r->bin_search(cmd.get_record(), cmp_p);
 	int j = 0;
 	switch (cmd.get_c_phone()) {

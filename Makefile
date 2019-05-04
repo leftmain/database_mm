@@ -1,4 +1,4 @@
-F = -std=c++11 -O3
+F = -std=c++11 -g
 H = header.h \
 	record.h \
 	command.h \
@@ -17,7 +17,7 @@ C = clang++
 #C = g++
 
 #all: a.out
-all: server
+all: server client
 
 a.out: main.o $H $M
 	$C main.o -o a.out

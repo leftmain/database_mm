@@ -45,7 +45,7 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 	fclose(fp);
-	d.print();
+//	d.print();
 
 	struct sockaddr_in addr;
 	int sock = 0;

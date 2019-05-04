@@ -331,6 +331,7 @@ void RBTree<T>::search_subtree(Command& cmd, RBNode<T> * r, int flag, int fd) {
 
 template <class T>
 void RBTree<T>::search(Command& cmd, RBNode<T> * r, int flag, int fd) {
+	if (r == nullptr) return;
 	int i = cmp_n(r->get_data(), cmd.get_record());
 	switch (cmd.get_c_name()) {
 		case EQ:
