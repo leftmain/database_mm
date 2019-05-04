@@ -21,6 +21,8 @@ void write_on_socket(int, char *, int);
 int read_from_socket(int, char *, int);
 void delete_n(char *);
 
+//static FILE * fp_log;
+
 int main(int argc, char ** argv) {
 	Database<Record> d;
 	const char * file = "a.txt";
@@ -83,14 +85,23 @@ int main(int argc, char ** argv) {
 	FD_ZERO(&active_set);
 	FD_SET(sock, &active_set);
 
+//	if (!(fp_log = fopen("log_server.txt", "w"))) {\
+		perror("fopen() error");\
+		return 1;\
+	}
+
 	struct timespec t1, t2;
-	clock_gettime(CLOCK_MONOTONIC, &t1);
+	bool flag = true;
 	while (true) {
 		read_set = active_set;
 		if (select(FD_SETSIZE, &read_set, 0, 0, 0) < 0) {
 			perror("select() error");
 			close(sock);
 			return 3;
+		}
+		if (flag) {
+			clock_gettime(CLOCK_MONOTONIC, &t1);
+			flag = false;
 		}
 		for (int i = 0; i < FD_SETSIZE; i++) {
 			if (FD_ISSET(i, &read_set)) {
@@ -110,6 +121,7 @@ int main(int argc, char ** argv) {
 						print_time();
 						write_on_socket(i, nullptr, -1);
 						close(sock);
+//						fclose(fp_log);
 						return 0;
 					}
 				}
@@ -119,6 +131,7 @@ int main(int argc, char ** argv) {
 	print_time();
 
 	close(sock);
+//	fclose(fp_log);
 	return 0;
 }
 
@@ -158,6 +171,9 @@ int new_client(int sock, fd_set * active_set) {
 	socklen_t size = sizeof(client);
 	int new_sock = accept(sock, (struct sockaddr *)&client, &size);
 	if (new_sock < 0) return new_sock;
+//	fprintf(fp_log, "Server connect\n\thost: %s\n\tport: %d\n", \
+			inet_ntoa(client.sin_addr), \
+			(unsigned)ntohs(client.sin_port));
 #ifdef DEBUG
 	printf("Server connect\n\thost: %s\n\tport: %d\n", \
 			inet_ntoa(client.sin_addr), \
